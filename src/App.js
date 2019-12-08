@@ -1,25 +1,26 @@
 import React from 'react';
-import logo from './logo.svg';
+import { assignState } from './state-store';
+import StateTest from './StateTest';
+
 import './App.css';
+
+// initial state
+assignState({
+  cart: {
+    count: 1,
+    items: [{
+      name: 'shoe',
+      qty: 1
+    }]
+  },
+  user: {
+    name: 'dan',
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <StateTest parentProp={"My name is firoz"} />
   );
 }
 

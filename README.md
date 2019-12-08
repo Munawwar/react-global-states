@@ -1,68 +1,95 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project a proof-of-concept on creating a shared/global state store,
+connecting multiple React components to the store and testing if
+components react to the changes in the store.
 
-## Available Scripts
+Wrap your components like so:
+```js
+import { connect } from './state-store';
+const Component = (props) => { /* blah blah */ }
+export default connect(['user'], Component);
+```
 
-In the project directory, you can run:
+And change properties from a button onClick handler like so:
+```js
+import { connect, assignState } from './state-store';
+const Component = (props) => {
+  /* blah blah */
 
-### `yarn start`
+  return (
+    <div>
+      Hi {(props.greeting || {}).name}
+      <button onClick={() => assignState({ greeting: { name: 'everyone' }})}>Greet everyone</button>
+    </div>
+  );
+}
+```
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+For those of you familiar with Redux there are multiple deviations from it:
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+1. biggest difference is there is no reducer layer! and there are no events!
+You use state-store.js's setState() or assignState() functions to set the global store's properties directly. It's so much simpler!
+Your app/site is mostly UI layer and Actions layer.
 
-### `yarn test`
+Reducer layer is an additional layer of complexity/abstraction that if you do need, you'd better use redux. Reducer layer do have it's use in adding for example, something like google analytic e-commerce events middleware or logging middleware (with thunk). However some apps/site don't need event middlewares. So pick the right tool.
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. the library only react to changes in level 1 and level 2 properties of the store object
 
-### `yarn build`
+Why this seemingly arbitraty restriction?
+Complexity reduction, the answer. i.e. I recommend you to see your global store not as
+super nested props. I'd want you to normalize it.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+So do't do:
+```
+{
+  productPage: {
+    cart: {
+      items: [...]
+    },
+    product,
+  },
+  cartPage: {
+    cart: {
+      items: [...]
+    },
+    couponCode: '',
+  }
+}
+```
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+No! this data store structure is complicated (and in this case redundant) to deal with.
+I recommend it be refactored to:
+```
+{
+  cart: {
+    items: [...]
+  },
+  productPage: {
+    product,
+  },
+  cartPage: {
+    couponCode: '',
+  }
+}
+```
+These can be refactored to two levels of nesting. Which I've enforced by only responding to change in those two levels of the store only.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+There are other advantages with 2 levels nesting. If you are like me, who scaffold the project components like the store props, then I've saved you from the mess/hell of deeply nested component directories. You treat your components and store data as though they are "linear".
 
-### `yarn eject`
+So what happens if there is a third level of nesting?
+Well the library will only do a JS === equality check, unlike the first two levels where individual properties are checked. Performance could take a hit.
+So make sure if you do change 3rd or 4th level (or more) object, that you create a new 3rd level object everytime (using spread or Object.assign or whatever), so that component re-rendering is triggered.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+3. you can only connect to level 1 properties of the store which will be passed
+as is with same prop name to the component.
+As mentioned in point #2, I strongly recommend 2 levels of store reactiviity. So it only makes sense to restrict this and simply mention the L1 props you want to connect to.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This is a good practice in redux I enforce anyway. In redux
+```js
+mapStateToProp(({ user, cart }) => ({ user, cart })); // I don't recommend renaming props or transforming it in any way
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+### Play with it
+```
+yarn install
+yarn start
+```
