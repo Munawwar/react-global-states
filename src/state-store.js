@@ -46,7 +46,7 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
   if (level <= 2) {
     // check if all props of oldState is in newState
     let isEqual = Object.entries(oldState).every(([key, val]) => {
-      if (level <= 2 && typeof val === 'object') {
+      if (level <= 2 && typeof val === 'object' && val !== null) {
         return twoLevelIsEqual(val, newState[key], level + 1);
       }
       return (oldState[key] === newState[key]);
@@ -61,7 +61,7 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
     // if so, they are equal (upto two levels).
     return isEqual;
   }
-  return false;
+  return oldState === newState;
 }
 
 // used to wrap components to receive global store props
