@@ -58,37 +58,38 @@ For those of you familiar with Redux there are multiple deviations from it:
 super nested props. I'd want you to normalize it.
 
    So don't do:
-   ```
-{
-  productPage: {
-    cart: {
-      items: [...]
-    },
-    product,
-  },
-  cartPage: {
-    cart: {
-      items: [...]
-    },
-    couponCode: '',
-  }
-}
-   ```
+    ```
+    {
+      productPage: {
+        cart: {
+          items: [...]
+        },
+        product,
+      },
+      cartPage: {
+        cart: {
+          items: [...]
+        },
+        couponCode: '',
+      }
+    }
+    ```
 
    Nope! This data store structure is complicated (and in this case 'cart' is redundant) to deal with. I recommend it be refactored to:
-   ```
-{
-  cart: {
-    items: [...]
-  },
-  productPage: {
-    product,
-  },
-  cartPage: {
-    couponCode: '',
-  }
-}
-   ```
+
+    ```
+    {
+      cart: {
+        items: [...]
+      },
+      productPage: {
+        product,
+      },
+      cartPage: {
+        couponCode: '',
+      }
+    }
+    ```
 
    These can be refactored to two levels of nesting. Which I've enforced by only responding to change in those two levels of the store only.
 
@@ -102,7 +103,7 @@ So make sure if you do change 3rd or 4th level (or more) object, that you create
 as is with same prop name to the component.
 As mentioned in point #2, I strongly recommend 2 levels of store reactivity. So it only makes sense to restrict this and simply mention the L1 props you want to connect to.
 
-This is a good practice in redux I enforce anyway. In redux
+   This is a good practice in redux I enforce anyway. In redux
 ```js
 mapStateToProp(({ user, cart }) => ({ user, cart })); // I don't recommend renaming props or transforming it in any way
 ```
