@@ -99,11 +99,12 @@ super nested props. I'd want you to normalize it.
    Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
 So make sure if you do change 3rd or 4th level (or more) object, that you create a new 3rd level object everytime (using spread or whatever), so that component re-rendering is triggered.
 
-3. you can only connect to level 1 properties of the store which will be passed
+3. You can only connect to level 1 properties of the store which will be passed
 as is with same prop name to the component.
-As mentioned in point #2, I strongly recommend 2 levels of store reactivity. So it only makes sense to restrict this and simply mention the L1 props you want to connect to.
+   
+   As mentioned in point #2, I strongly recommend 2 levels of store reactivity. So it only makes sense to restrict this and simply mention the L1 props you want to connect to.
 
-   This is a good practice in redux I enforce anyway. In redux
+   This is a good practice in redux I enforce anyway. In redux:
 ```js
 mapStateToProp(({ user, cart }) => ({ user, cart })); // I don't recommend renaming props or transforming it in any way
 ```
