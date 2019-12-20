@@ -46,14 +46,14 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
   if (level <= 2) {
     // check if all props of oldState is in newState
     let isEqual = Object.entries(oldState).every(([key, val]) => {
-      if (level <= 2 && typeof val === 'object' && val !== null) {
+      if (level < 2 && typeof val === 'object' && val !== null) {
         return twoLevelIsEqual(val, newState[key], level + 1);
       }
       return (oldState[key] === newState[key]);
     });
     // check if all props of newState is in oldState
     isEqual = isEqual && Object.entries(newState).every(([key, val]) => {
-      if (level <= 2 && typeof val === 'object') {
+      if (level < 2 && typeof val === 'object') {
         return twoLevelIsEqual(oldState[key], val, level + 1);
       }
       return (oldState[key] === newState[key]);
