@@ -16,7 +16,7 @@ Wrap your components like so:
 ```js
 import { connect } from './state-store';
 const Component = (props) => { /* blah blah */ }
-// get 'user' prop from global store
+// get 'greeting' prop from global store
 export default connect(['greeting'], Component);
 ```
 
