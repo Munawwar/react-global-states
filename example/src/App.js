@@ -1,5 +1,5 @@
 import React from 'react';
-import { updateState } from './state-store';
+import { updateState } from 'react-global-states';
 import StateTest from './StateTest';
 
 import './App.css';
