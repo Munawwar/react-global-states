@@ -1,7 +1,7 @@
 {
 	"name": "react-global-states",
 	"homepage": "http://Munawwar.github.io/react-global-states",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "Simple global state store",
 	"repository": {
 		"type": "git",
@@ -19,7 +19,7 @@
 		"installPeer": "node build-tool/peerDep.js",
 		"test": "jest",
 		"test:dev": "jest --watch",
-		"lint": "eslint src/**/*.{js,jsx} --fix",
+		"lint": "eslint src/**/*.js --fix",
 		"stylelint": "stylelint src/**/*.{ts,tsx,jsx,js,css,scss,less} --fix",
 		"commit": "git-cz",
 		"release": "standard-version",
