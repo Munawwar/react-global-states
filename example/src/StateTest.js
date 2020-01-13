@@ -3,7 +3,7 @@ import {
   connect,
   updateState,
   createSubPropUpdater,
-} from './state-store';
+} from 'react-state-store';
 
 const updateUserState = createSubPropUpdater('user');
 

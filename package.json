@@ -1,34 +1,27 @@
 {
-  "name": "statestore",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-scripts": "3.3.0"
-  },
+  "name": "react-state-store",
+  "version": "1.0.0",
+  "description": "Simple global state store",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Munawwar/react-state-store.git"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "keywords": [
+    "react",
+    "global",
+    "states"
+  ],
+  "author": "Munawwar Firoz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Munawwar/react-state-store/issues"
+  },
+  "homepage": "https://github.com/Munawwar/react-state-store#readme"
 }
