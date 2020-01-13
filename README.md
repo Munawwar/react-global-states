@@ -88,7 +88,10 @@ as is with same prop name to the component.
     As mentioned in point #1, react-global-states only has 2 level of store reactivity. So it only makes sense to restrict this and simply mention the L1 props you want to connect to.
 
 ### Play with it
+
+Go to examples directory
 ```
 yarn install
 yarn start
 ```
+and start playing with the example.
