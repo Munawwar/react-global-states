@@ -61,27 +61,39 @@ export const setState = (newState) => {
 };
 
 // utility
+const plainObjectPrototype = Object.getPrototypeOf({});
 const twoLevelIsEqual = (oldState, newState, level = 1) => {
-  if (level <= 2) {
+  if (
+    oldState === null
+    || newState === null
+    || oldState === undefined
+    || newState === undefined
+  ) {
+    return oldState === newState;
+  }
+
+  const oldStatePrototype = Object.getPrototypeOf(oldState);
+  if (
+    level <= 2
+    && (oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
+    && oldStatePrototype === Object.getPrototypeOf(newState)
+  ) {
     // check if all props of oldState is in newState
-    let isEqual = Object.entries(oldState).every(([key, val]) => {
-      if (level < 2 && typeof val === 'object' && val !== null) {
-        return twoLevelIsEqual(val, newState[key], level + 1);
-      }
-      return (oldState[key] === newState[key]);
-    });
+    let isEqual = Object
+      .entries(oldState)
+      .every(([key, val]) => twoLevelIsEqual(val, newState[key], level + 1));
     // check if all props of newState is in oldState
-    isEqual = isEqual && Object.entries(newState).every(([key, val]) => {
-      if (level < 2 && typeof val === 'object') {
-        return twoLevelIsEqual(oldState[key], val, level + 1);
-      }
-      return (oldState[key] === newState[key]);
-    });
+    isEqual = isEqual && Object
+      .entries(newState)
+      .every(([key, val]) => twoLevelIsEqual(oldState[key], val, level + 1));
     // if so, they are equal (upto two levels).
     return isEqual;
   }
+  if (oldState instanceof Date && newState instanceof Date) {
+    return oldState.getTime() === newState.getTime();
+  }
   return oldState === newState;
-}
+};
 
 // used to wrap components to receive global store props
 export const connect = (propsToConnectTo = [], Component) => {
