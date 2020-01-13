@@ -26,13 +26,32 @@ const pubsub = {
 };
 
 // global state merger. unlike redux, I am not enforcing reducer layer
-export const assignState = (partial) => {
+export const updateState = (partial) => {
   const newStore = {
     ...store,
     ...partial,
   };
   store = newStore;
   pubsub.notify(newStore);
+};
+
+// curry function to partially update a sub property of global store.
+// e.g const updateCartState = createSubPropUpdater('cart');
+// updateCartState({ items: [], quantity: 0 });
+// this is equivalent to
+// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
+export const createSubPropUpdater = (propName) => {
+  return (partial) => {
+    const newStore = {
+      ...store,
+      [propName]: {
+        ...(store[propName] || {}),
+        ...partial,
+      }
+    };
+    store = newStore;
+    pubsub.notify(newStore);
+  };
 };
 
 export const setState = (newState) => {

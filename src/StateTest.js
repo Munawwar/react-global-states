@@ -1,5 +1,11 @@
 import React from 'react';
-import { connect, assignState } from './state-store';
+import {
+  connect,
+  updateState,
+  createSubPropUpdater,
+} from './state-store';
+
+const updateUserState = createSubPropUpdater('user');
 
 const Component = ({
   user: {
@@ -14,11 +20,11 @@ const Component = ({
     {parentProp}
     <br/>
     <br/>
-    <button onClick={() => assignState({ user: { name: 'everyone' }})}>Greet everyone instead</button>
+    <button onClick={() => updateUserState({ name: 'everyone' })}>Greet everyone instead</button>
 
     <br/>
     <br/>
-    <button onClick={() => assignState({ cart: { items: [] }}) }>Change non-connected prop</button>
+    <button onClick={() => updateState({ cart: { items: [] }}) }>Change non-connected prop</button>
   </div>;
 };
 

@@ -22,7 +22,7 @@ export default connect(['greeting'], Component);
 
 And change properties from a button onClick handler like so:
 ```js
-import { connect, assignState } from './state-store';
+import { connect, updateState } from './state-store';
 const Component = (props) => {
   /* blah blah */
 
@@ -30,7 +30,7 @@ const Component = (props) => {
     <div>
       Hi {props.greeting?.name ?? 'Dan'}
       {/* for sake of demo, I am not placing the action logic in an action file */}
-      <button onClick={() => assignState({ greeting: { name: 'everyone' }})}>Greet everyone</button>
+      <button onClick={() => updateState({ greeting: { name: 'everyone' }})}>Greet everyone</button>
     </div>
   );
 }
@@ -45,7 +45,7 @@ For those of you familiar with Redux there are multiple deviations from it:
 
 1. The biggest difference is that there is no reducer layer! and there are no events!
    
-   You use state-store.js's setState() or assignState() functions to set the global store's properties directly. It's so much simpler!
+   You use state-store.js's setState() or updateState() functions to set the global store's properties directly. It's so much simpler!
    
    Your client-side is mostly components layer and actions layer.
 

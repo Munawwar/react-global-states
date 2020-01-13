@@ -1,11 +1,11 @@
 import React from 'react';
-import { assignState } from './state-store';
+import { updateState } from './state-store';
 import StateTest from './StateTest';
 
 import './App.css';
 
 // initial state
-assignState({
+updateState({
   cart: {
     count: 1,
     items: [{
