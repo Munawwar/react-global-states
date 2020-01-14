@@ -10,7 +10,7 @@ const updateUserState = createSubPropUpdater('user');
 const Component = ({
   parentProp = '',
 }) => {
-  console.log('StateTest render...');
+  console.log('StateHookTest render...');
   const { user: { name } = {} } = useGlobalStore(['user']);
   return <div>
     Hi {name}
