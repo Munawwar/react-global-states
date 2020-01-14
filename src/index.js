@@ -130,3 +130,36 @@ export const connect = (propsToConnectTo = [], Component) => {
     return <Component {...state} {...props} />;
   };
 }
+
+export const useGlobalStore = (propsToConnectTo = []) => {
+  let [state, setState] = useState(
+    propsToConnectTo.reduce((acc, propName) => {
+      if (propName in store) {
+        acc[propName] = store[propName];
+      }
+      return acc;
+    }, {}),
+  );
+
+  useEffect(() => {
+    const newStateHandler = (newStore) => {
+      const newState = propsToConnectTo.reduce((acc, propName) => {
+        if (propName in store) {
+          acc[propName] = newStore[propName];
+        }
+        return acc;
+      }, {});
+      // console.log('current state', state);
+      // console.log('new state', newState);
+      // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
+      if (!twoLevelIsEqual(state, newState)) {
+        setState(newState);
+      }
+    };
+    pubsub.subscribe(newStateHandler);
+    // on component unmount, unsubscribe to prevent mem leak
+    return () => pubsub.unsubscribe(newStateHandler);
+  }, [state]);
+
+  return state;
+};

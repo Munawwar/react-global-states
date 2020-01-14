@@ -1,19 +1,17 @@
 import React from 'react';
 import {
-  connect,
   updateState,
   createSubPropUpdater,
+  useGlobalStore,
 } from 'react-global-states';
 
 const updateUserState = createSubPropUpdater('user');
 
 const Component = ({
-  user: {
-    name,
-  } = {},
   parentProp = '',
 }) => {
   console.log('StateTest render...');
+  const { user: { name } = {} } = useGlobalStore(['user']);
   return <div>
     Hi {name}
     <br/>
@@ -28,4 +26,4 @@ const Component = ({
   </div>;
 };
 
-export default connect(['user'], Component);
+export default Component;
