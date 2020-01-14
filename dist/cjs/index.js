@@ -5,7 +5,7 @@ var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWild
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
 exports.__esModule = true;
-exports.connect = exports.setState = exports.createSubPropUpdater = exports.updateState = void 0;
+exports.useGlobalStore = exports.connect = exports.setState = exports.createSubPropUpdater = exports.updateState = void 0;
 
 var _extends3 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
@@ -154,3 +154,46 @@ var connect = function (propsToConnectTo, Component) {
 };
 
 exports.connect = connect;
+
+var useGlobalStore = function (propsToConnectTo) {
+  if (propsToConnectTo === void 0) {
+    propsToConnectTo = [];
+  }
+
+  var _useState2 = (0, _react.useState)(propsToConnectTo.reduce(function (acc, propName) {
+    if (propName in store) {
+      acc[propName] = store[propName];
+    }
+
+    return acc;
+  }, {})),
+      state = _useState2[0],
+      setState = _useState2[1];
+
+  (0, _react.useEffect)(function () {
+    var newStateHandler = function (newStore) {
+      var newState = propsToConnectTo.reduce(function (acc, propName) {
+        if (propName in store) {
+          acc[propName] = newStore[propName];
+        }
+
+        return acc;
+      }, {}); // console.log('current state', state);
+      // console.log('new state', newState);
+      // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
+
+      if (!twoLevelIsEqual(state, newState)) {
+        setState(newState);
+      }
+    };
+
+    pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
+
+    return function () {
+      return pubsub.unsubscribe(newStateHandler);
+    };
+  }, [state]);
+  return state;
+};
+
+exports.useGlobalStore = useGlobalStore;

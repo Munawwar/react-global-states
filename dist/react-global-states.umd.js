@@ -167,11 +167,52 @@
 	    return React__default.createElement(Component, _extends_1({}, state, props));
 	  };
 	};
+	var useGlobalStore = function (propsToConnectTo) {
+	  if (propsToConnectTo === void 0) {
+	    propsToConnectTo = [];
+	  }
+
+	  var _useState2 = React.useState(propsToConnectTo.reduce(function (acc, propName) {
+	    if (propName in store) {
+	      acc[propName] = store[propName];
+	    }
+
+	    return acc;
+	  }, {})),
+	      state = _useState2[0],
+	      setState = _useState2[1];
+
+	  React.useEffect(function () {
+	    var newStateHandler = function (newStore) {
+	      var newState = propsToConnectTo.reduce(function (acc, propName) {
+	        if (propName in store) {
+	          acc[propName] = newStore[propName];
+	        }
+
+	        return acc;
+	      }, {}); // console.log('current state', state);
+	      // console.log('new state', newState);
+	      // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
+
+	      if (!twoLevelIsEqual(state, newState)) {
+	        setState(newState);
+	      }
+	    };
+
+	    pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
+
+	    return function () {
+	      return pubsub.unsubscribe(newStateHandler);
+	    };
+	  }, [state]);
+	  return state;
+	};
 
 	exports.connect = connect;
 	exports.createSubPropUpdater = createSubPropUpdater;
 	exports.setState = setState;
 	exports.updateState = updateState;
+	exports.useGlobalStore = useGlobalStore;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 

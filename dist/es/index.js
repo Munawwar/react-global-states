@@ -136,3 +136,43 @@ export var connect = function (propsToConnectTo, Component) {
     return React.createElement(Component, _extends({}, state, props));
   };
 };
+export var useGlobalStore = function (propsToConnectTo) {
+  if (propsToConnectTo === void 0) {
+    propsToConnectTo = [];
+  }
+
+  var _useState2 = useState(propsToConnectTo.reduce(function (acc, propName) {
+    if (propName in store) {
+      acc[propName] = store[propName];
+    }
+
+    return acc;
+  }, {})),
+      state = _useState2[0],
+      setState = _useState2[1];
+
+  useEffect(function () {
+    var newStateHandler = function (newStore) {
+      var newState = propsToConnectTo.reduce(function (acc, propName) {
+        if (propName in store) {
+          acc[propName] = newStore[propName];
+        }
+
+        return acc;
+      }, {}); // console.log('current state', state);
+      // console.log('new state', newState);
+      // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
+
+      if (!twoLevelIsEqual(state, newState)) {
+        setState(newState);
+      }
+    };
+
+    pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
+
+    return function () {
+      return pubsub.unsubscribe(newStateHandler);
+    };
+  }, [state]);
+  return state;
+};
