@@ -117,7 +117,7 @@ export const connect = (propsToConnectTo = [], Component) => {
     return React.createElement(Component, _extends({}, state, props));
   };
 };
-export const useGlobalStore = (propsToConnectTo = []) => {
+export const useGlobalStates = (propsToConnectTo = []) => {
   let [state, setState] = useState(propsToConnectTo.reduce((acc, propName) => {
     if (propName in store) {
       acc[propName] = store[propName];

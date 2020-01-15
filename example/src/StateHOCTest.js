@@ -2,7 +2,7 @@ import React from 'react';
 import {
   updateState,
   createSubPropUpdater,
-  useGlobalStore,
+  useGlobalStates,
 } from 'react-global-states';
 
 const updateUserState = createSubPropUpdater('user');
@@ -11,7 +11,7 @@ const Component = ({
   parentProp = '',
 }) => {
   console.log('StateHOCTest render...');
-  const { user: { name } = {} } = useGlobalStore(['user']);
+  const { user: { name } = {} } = useGlobalStates(['user']);
   return <div>
     Hi {name}
     <br/>

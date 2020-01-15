@@ -5,7 +5,7 @@ var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWild
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
 exports.__esModule = true;
-exports.useGlobalStore = exports.connect = exports.setState = exports.createSubPropUpdater = exports.updateState = void 0;
+exports.useGlobalStates = exports.connect = exports.setState = exports.createSubPropUpdater = exports.updateState = void 0;
 
 var _extends3 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
@@ -155,7 +155,7 @@ var connect = function (propsToConnectTo, Component) {
 
 exports.connect = connect;
 
-var useGlobalStore = function (propsToConnectTo) {
+var useGlobalStates = function (propsToConnectTo) {
   if (propsToConnectTo === void 0) {
     propsToConnectTo = [];
   }
@@ -196,4 +196,4 @@ var useGlobalStore = function (propsToConnectTo) {
   return state;
 };
 
-exports.useGlobalStore = useGlobalStore;
+exports.useGlobalStates = useGlobalStates;

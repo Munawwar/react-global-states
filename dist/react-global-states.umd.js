@@ -167,7 +167,7 @@
 	    return React__default.createElement(Component, _extends_1({}, state, props));
 	  };
 	};
-	var useGlobalStore = function (propsToConnectTo) {
+	var useGlobalStates = function (propsToConnectTo) {
 	  if (propsToConnectTo === void 0) {
 	    propsToConnectTo = [];
 	  }
@@ -212,7 +212,7 @@
 	exports.createSubPropUpdater = createSubPropUpdater;
 	exports.setState = setState;
 	exports.updateState = updateState;
-	exports.useGlobalStore = useGlobalStore;
+	exports.useGlobalStates = useGlobalStates;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 

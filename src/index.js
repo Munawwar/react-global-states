@@ -131,7 +131,7 @@ export const connect = (propsToConnectTo = [], Component) => {
   };
 }
 
-export const useGlobalStore = (propsToConnectTo = []) => {
+export const useGlobalStates = (propsToConnectTo = []) => {
   let [state, setState] = useState(
     propsToConnectTo.reduce((acc, propName) => {
       if (propName in store) {

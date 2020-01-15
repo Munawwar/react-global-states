@@ -136,7 +136,7 @@ export var connect = function (propsToConnectTo, Component) {
     return React.createElement(Component, _extends({}, state, props));
   };
 };
-export var useGlobalStore = function (propsToConnectTo) {
+export var useGlobalStates = function (propsToConnectTo) {
   if (propsToConnectTo === void 0) {
     propsToConnectTo = [];
   }
