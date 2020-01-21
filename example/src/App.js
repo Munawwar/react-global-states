@@ -1,12 +1,12 @@
 import React from 'react';
-import { updateState } from 'react-global-states';
+import { updateStates } from 'react-global-states';
 import StateHOCTest from './StateHOCTest';
 import StateHookTest from './StateHookTest';
 
 import './App.css';
 
 // initial state
-updateState({
+updateStates({
   cart: {
     count: 1,
     items: [{

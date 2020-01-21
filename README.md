@@ -5,7 +5,7 @@ That is multiple React components can use shared global states to efficiently re
 ### Quick example
 
 ```js
-import { useGlobalStates, updateState } from 'react-global-states';
+import { useGlobalStates, updateStates } from 'react-global-states';
 const Component = (props) => {
   // get only the level 1 properties you need from the global store
   const {
@@ -18,7 +18,7 @@ const Component = (props) => {
     <div>
       Hi {name}
       {/* for sake of demo, I am not placing the action logic in an action file */}
-      <button onClick={() => updateState({ greeting: { name: 'everyone' }})}>Greet everyone</button>
+      <button onClick={() => updateStates({ greeting: { name: 'everyone' }})}>Greet everyone</button>
     </div>
   );
 }
@@ -33,7 +33,7 @@ Your action file maybe be updating one part of your store across methods. It see
 
 ```js
 function func1 () {
-  updateState({
+  updateStates({
     cart: {
       prop1: '...'
     }
@@ -41,7 +41,7 @@ function func1 () {
 }
 
 function func2 () {
-  updateState({
+  updateStates({
     cart: {
       prop2: '...'
     }

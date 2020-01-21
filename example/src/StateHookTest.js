@@ -22,7 +22,7 @@ const Component = ({
 
     <br/>
     <br/>
-    <button onClick={() => updateState({ cart: { items: [] }}) }>Change non-connected prop</button>
+    <button onClick={() => updateStates({ cart: { items: [] }}) }>Change non-connected prop</button>
   </div>;
 };
 
