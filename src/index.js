@@ -35,11 +35,25 @@ export const setState = (newState) => {
   pubsub.notify(newStore);
 };
 
+const plainObjectPrototype = Object.getPrototypeOf({});
+const isPlainObject = val => val !== null && Object.getPrototypeOf(val) === plainObjectPrototype;
+
 // global state merger. unlike redux, I am not enforcing reducer layer
-export const updateState = (partial) => {
+export const updateState = (twoLevelPartial) => {
+  const levelOnePartial = Object
+    .entries(twoLevelPartial)
+    .reduce((acc, [key, val]) => ({
+      ...acc,
+      [key]: isPlainObject(val)
+        ? {
+          ...store[key],
+          ...val,
+        }
+        : val,
+    }), {});
   const newStore = {
     ...store,
-    ...partial,
+    ...levelOnePartial,
   };
   store = newStore;
   pubsub.notify(newStore);
@@ -65,7 +79,6 @@ export const createSubPropUpdater = (propName) => {
 };
 
 // utility
-const plainObjectPrototype = Object.getPrototypeOf({});
 const twoLevelIsEqual = (oldState, newState, level = 1) => {
   if (
     oldState === null
