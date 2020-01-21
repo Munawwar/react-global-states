@@ -25,18 +25,17 @@ const pubsub = {
   }
 };
 
-export const getState = () => {
-  return { ...store };
-};
-
-export const setState = (newState) => {
-  const newStore = { ...newState };
-  store = newStore;
-  pubsub.notify(newStore);
+export const getStateGroups = (propNames) => {
+  return propNames.reduce((acc, propName) => {
+    if (propName in store) {
+      acc[propName] = store[propName];
+    }
+    return acc;
+  }, {});
 };
 
 // global state merger. unlike redux, I am not enforcing reducer layer
-export const updateState = (partial) => {
+export const setStateGroups = (partial) => {
   const newStore = {
     ...store,
     ...partial,
@@ -46,11 +45,11 @@ export const updateState = (partial) => {
 };
 
 // curry function to partially update a sub property of global store.
-// e.g const updateCartState = createSubPropUpdater('cart');
+// e.g const updateCartState = createStateGroupUpdater('cart');
 // updateCartState({ items: [], quantity: 0 });
 // this is equivalent to
-// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
-export const createSubPropUpdater = (propName) => {
+// setStates({ cart: { ...store.cart, items: [], quantity: 0 } })
+export const createStateGroupUpdater = (propName) => {
   return (partial) => {
     const newStore = {
       ...store,
@@ -135,7 +134,7 @@ export const connect = (propsToConnectTo = [], Component) => {
   };
 }
 
-export const useGlobalStates = (propsToConnectTo = []) => {
+export const useStateGroups = (propsToConnectTo = []) => {
   let [state, setState] = useState(
     propsToConnectTo.reduce((acc, propName) => {
       if (propName in store) {
