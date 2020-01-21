@@ -25,6 +25,16 @@ const pubsub = {
   }
 };
 
+export const getState = () => {
+  return { ...store };
+};
+
+export const setState = (newState) => {
+  const newStore = { ...newState };
+  store = newStore;
+  pubsub.notify(newStore);
+};
+
 // global state merger. unlike redux, I am not enforcing reducer layer
 export const updateState = (partial) => {
   const newStore = {
@@ -52,12 +62,6 @@ export const createSubPropUpdater = (propName) => {
     store = newStore;
     pubsub.notify(newStore);
   };
-};
-
-export const setState = (newState) => {
-  const newStore = { ...newState };
-  store = newStore;
-  pubsub.notify(newStore);
 };
 
 // utility
@@ -144,7 +148,7 @@ export const useGlobalStates = (propsToConnectTo = []) => {
   useEffect(() => {
     const newStateHandler = (newStore) => {
       const newState = propsToConnectTo.reduce((acc, propName) => {
-        if (propName in store) {
+        if (propName in newStore) {
           acc[propName] = newStore[propName];
         }
         return acc;
