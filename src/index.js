@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 // "The" global store
 let store = {};
@@ -25,48 +25,36 @@ const pubsub = {
   }
 };
 
-export const getState = () => {
-  return { ...store };
-};
-
-export const setState = (newState) => {
-  const newStore = { ...newState };
-  store = newStore;
-  pubsub.notify(newStore);
-};
-
-// global state merger. unlike redux, I am not enforcing reducer layer
-export const updateState = (partial) => {
-  const newStore = {
-    ...store,
-    ...partial,
-  };
-  store = newStore;
-  pubsub.notify(newStore);
+export const getState = (propName) => {
+  return store[propName];
 };
 
 // curry function to partially update a sub property of global store.
-// e.g const updateCartState = createSubPropUpdater('cart');
+// e.g const updateCartState = getStateUpdater('cart');
 // updateCartState({ items: [], quantity: 0 });
 // this is equivalent to
-// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
-export const createSubPropUpdater = (propName) => {
-  return (partial) => {
-    const newStore = {
-      ...store,
-      [propName]: {
-        ...(store[propName] || {}),
-        ...partial,
-      }
+// setStates({ cart: { ...store.cart, items: [], quantity: 0 } })
+const cache = {};
+export const getStateUpdater = (propName) => {
+  if (!cache[propName]) {
+    cache[propName] = (partial) => {
+      const newStore = {
+        ...store,
+        [propName]: {
+          ...(store[propName] || {}),
+          ...partial,
+        }
+      };
+      store = newStore;
+      pubsub.notify(newStore);
     };
-    store = newStore;
-    pubsub.notify(newStore);
-  };
+  }
+  return cache[propName];
 };
 
 // utility
 const plainObjectPrototype = Object.getPrototypeOf({});
-const twoLevelIsEqual = (oldState, newState, level = 1) => {
+const isShallowEqual = (oldState, newState, level = 1) => {
   if (
     oldState === null
     || newState === null
@@ -78,20 +66,22 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
 
   const oldStatePrototype = Object.getPrototypeOf(oldState);
   if (
-    level <= 2
+    level === 1
     && (oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
     && oldStatePrototype === Object.getPrototypeOf(newState)
   ) {
-    // check if all props of oldState is in newState
-    let isEqual = Object
-      .entries(oldState)
-      .every(([key, val]) => twoLevelIsEqual(val, newState[key], level + 1));
-    // check if all props of newState is in oldState
-    isEqual = isEqual && Object
-      .entries(newState)
-      .every(([key, val]) => twoLevelIsEqual(oldState[key], val, level + 1));
+    return (
+      // check if all props of oldState is in newState
+      Object
+        .entries(oldState)
+        .every(([key, val]) => isShallowEqual(val, newState[key], level + 1))
+      // check if all props of newState is in oldState
+      &&
+      Object
+        .entries(newState)
+        .every(([key, val]) => isShallowEqual(oldState[key], val, level + 1))
+    );
     // if so, they are equal (upto two levels).
-    return isEqual;
   }
   if (oldState instanceof Date && newState instanceof Date) {
     return oldState.getTime() === newState.getTime();
@@ -99,64 +89,18 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
   return oldState === newState;
 };
 
-// used to wrap components to receive global store props
-export const connect = (propsToConnectTo = [], Component) => {
-  return (props) => { // state container
-    let [state, setState] = useState(
-      propsToConnectTo.reduce((acc, propName) => {
-        if (propName in store) {
-          acc[propName] = store[propName];
-        }
-        return acc;
-      }, {}),
-    );
-
-    useEffect(() => {
-      const newStateHandler = (newStore) => {
-        const newState = propsToConnectTo.reduce((acc, propName) => {
-          if (propName in store) {
-            acc[propName] = newStore[propName];
-          }
-          return acc;
-        }, {});
-        // console.log('current state', state);
-        // console.log('new state', newState);
-        // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-        if (!twoLevelIsEqual(state, newState)) {
-          setState(newState);
-        }
-      };
-      pubsub.subscribe(newStateHandler);
-      // on component unmount, unsubscribe to prevent mem leak
-      return () => pubsub.unsubscribe(newStateHandler);
-    }, [state]);
-
-    return <Component {...state} {...props} />;
-  };
-}
-
-export const useGlobalStates = (propsToConnectTo = []) => {
+export const useGlobalState = (propName) => {
   let [state, setState] = useState(
-    propsToConnectTo.reduce((acc, propName) => {
-      if (propName in store) {
-        acc[propName] = store[propName];
-      }
-      return acc;
-    }, {}),
+    propName in store ? store[propName] : {},
   );
 
   useEffect(() => {
     const newStateHandler = (newStore) => {
-      const newState = propsToConnectTo.reduce((acc, propName) => {
-        if (propName in newStore) {
-          acc[propName] = newStore[propName];
-        }
-        return acc;
-      }, {});
+      const newState = newStore[propName];
       // console.log('current state', state);
       // console.log('new state', newState);
-      // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-      if (!twoLevelIsEqual(state, newState)) {
+      // console.log('isShallowEqual', isShallowEqual(state, newState));
+      if (!isShallowEqual(state, newState)) {
         setState(newState);
       }
     };
