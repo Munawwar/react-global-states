@@ -37,7 +37,7 @@ Use getStates():
 
 ```js
 import { getStates } from 'react-global-states';
-const { cart } = getStates(['cart']);
+const { cart } = getStates();
 ```
 
 
@@ -126,7 +126,7 @@ Returns: the entire global store.
 
 Function to update multiple states on the global store. updateStates with spread your new states as level 1 props of store (it does not replace other existing props of the store).
 
-So let's say your store look like
+So let's say your store looks like
 
 ```js
 {
