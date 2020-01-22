@@ -27,6 +27,20 @@ export default Component;
 
 That's it. Simple as that.
 
+### Action file
+
+It is good practice to move the setStateGroups() calls to "action" separate file.
+
+Within that file you can't use hooks though. So how to get the current states?
+
+Use getStates():
+
+```js
+import { getStates } from 'react-global-states';
+const { cart } = getStates(['cart']);
+```
+
+
 ### Helper
 
 Your action file maybe be updating one part of your store across methods. It seems a bit redundant to always do:
@@ -35,6 +49,7 @@ Your action file maybe be updating one part of your store across methods. It see
 function func1 () {
   updateStates({
     cart: {
+      ...cart,
       prop1: '...'
     }
   });
@@ -43,6 +58,7 @@ function func1 () {
 function func2 () {
   updateStates({
     cart: {
+      ...cart,
       prop2: '...'
     }
   });
@@ -87,3 +103,69 @@ yarn install
 yarn start
 ```
 and start playing with the example.
+
+### API Reference
+
+##### useGlobalStates(propNames&lt;Array&gt;)
+
+React hook to fetch the properties you want from global store. Using the hook also associates the component with only those props you've asked for. This makes re-rendering performance much better.
+
+Arguments:
+
+propNames[]: Array of prop names (strings) you want to fetch from global store
+
+Returns: an object with the key, values for each prop name you asked for. If a value doesn't exist you get undefined as the value for the prop name.
+
+
+##### getStates()
+To get states outside of a component (example: in an action file).
+
+Returns: the entire global store.
+
+##### updateStates(partial&lt;Object&gt;)
+
+Function to update multiple states on the global store. updateStates with spread your new states as level 1 props of store (it does not replace other existing props of the store).
+
+So let's say your store look like
+
+```js
+{
+  prop1: { a: 1 },
+  prop2: { a: 0 },
+}
+```
+
+and you do a update like:
+```js
+updateStates({
+  prop2: { b: 2 },
+  prop3: { c: 3 },
+});
+```
+
+then the resultant global store will look like:
+```js
+{
+  prop1: { a: 1 },
+  prop2: { b: 2 },
+  prop3: { c: 3 },
+}
+```
+
+Arguments:
+
+partial: An object with store props (as key-values) that you want to update.
+
+Returns: No return value
+
+##### createSubPropUpdater(propName&lt;String&gt;)
+
+Returns a function that you can use to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
+
+This is a convinence function. You can achieve what you want with updateStates() function alone if you wish. Check <a href="#Helper">Helper</a> section for more info on when one would use this.
+
+Arguments:
+
+propName: The prop name whose sub/inner properties that you want to ultimately update.
+
+Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.

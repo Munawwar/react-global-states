@@ -1,7 +1,6 @@
 import React from 'react';
 import { updateStates } from 'react-global-states';
-import StateHOCTest from './StateHOCTest';
-import StateHookTest from './StateHookTest';
+import StateTest from './StateTest';
 
 import './App.css';
 
@@ -21,15 +20,7 @@ updateStates({
 
 function App() {
   return (
-    <React.Fragment>
-      <h3>Using connect() (Higher order component)</h3>
-      <StateHOCTest parentProp={"My name is firoz"} />
-      <br />
-      <hr />
-      <br />
-      <h3>Using useGlobalStates() (React hooks)</h3>
-      <StateHookTest parentProp={"My name is firoz"} />
-    </React.Fragment>
+    <StateTest parentProp={"My name is firoz"} />
   );
 }
 

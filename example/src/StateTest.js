@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  updateState,
+  updateStates,
   createSubPropUpdater,
   useGlobalStates,
 } from 'react-global-states';
@@ -10,7 +10,7 @@ const updateUserState = createSubPropUpdater('user');
 const Component = ({
   parentProp = '',
 }) => {
-  console.log('StateHookTest render...');
+  console.log('StateTest render...');
   const { user: { name } = {} } = useGlobalStates(['user']);
   return <div>
     Hi {name}
@@ -22,7 +22,7 @@ const Component = ({
 
     <br/>
     <br/>
-    <button onClick={() => updateStates({ cart: { items: [] }}) }>Change non-connected prop</button>
+    <button onClick={() => updateStates({ cart: { count: 0, items: [] }}) }>Change non-connected prop</button>
   </div>;
 };
 

@@ -103,6 +103,7 @@ export const useGlobalStates = (propsToConnectTo = []) => {
     }, {}),
   );
 
+  const propNameHash = propsToConnectTo.slice().sort().join('|');
   useEffect(() => {
     const newStateHandler = (newStore) => {
       const newState = propsToConnectTo.reduce((acc, propName) => {
@@ -121,7 +122,8 @@ export const useGlobalStates = (propsToConnectTo = []) => {
     pubsub.subscribe(newStateHandler);
     // on component unmount, unsubscribe to prevent mem leak
     return () => pubsub.unsubscribe(newStateHandler);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, propNameHash]);
 
   return state;
 };
