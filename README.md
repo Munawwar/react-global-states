@@ -29,7 +29,7 @@ That's it. Simple as that.
 
 ### Action file
 
-It is good practice to move the setStateGroups() calls to "action" separate file.
+It is good practice to move the updateStates() calls to separate "action" file.
 
 Within that file you can't use hooks though. So how to get the current states?
 
