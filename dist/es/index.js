@@ -1,5 +1,5 @@
 import _extends from "@babel/runtime/helpers/extends";
-import React, { useState, useEffect } from 'react'; // "The" global store
+import { useState, useEffect } from 'react'; // "The" global store
 
 var store = {}; // internal publisher-subscriber system to
 // notify containers of store changes.
@@ -25,9 +25,12 @@ var pubsub = {
       return handler(newStore);
     });
   }
+};
+export var getStates = function () {
+  return _extends({}, store);
 }; // global state merger. unlike redux, I am not enforcing reducer layer
 
-export var updateState = function (partial) {
+export var updateStates = function (partial) {
   var newStore = _extends({}, store, {}, partial);
 
   store = newStore;
@@ -36,7 +39,7 @@ export var updateState = function (partial) {
 // e.g const updateCartState = createSubPropUpdater('cart');
 // updateCartState({ items: [], quantity: 0 });
 // this is equivalent to
-// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
+// updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
 
 export var createSubPropUpdater = function (propName) {
   return function (partial) {
@@ -47,12 +50,6 @@ export var createSubPropUpdater = function (propName) {
     store = newStore;
     pubsub.notify(newStore);
   };
-};
-export var setState = function (newState) {
-  var newStore = _extends({}, newState);
-
-  store = newStore;
-  pubsub.notify(newStore);
 }; // utility
 
 var plainObjectPrototype = Object.getPrototypeOf({});
@@ -90,71 +87,28 @@ var twoLevelIsEqual = function (oldState, newState, level) {
   }
 
   return oldState === newState;
-}; // used to wrap components to receive global store props
-
-
-export var connect = function (propsToConnectTo, Component) {
-  if (propsToConnectTo === void 0) {
-    propsToConnectTo = [];
-  }
-
-  return function (props) {
-    // state container
-    var _useState = useState(propsToConnectTo.reduce(function (acc, propName) {
-      if (propName in store) {
-        acc[propName] = store[propName];
-      }
-
-      return acc;
-    }, {})),
-        state = _useState[0],
-        setState = _useState[1];
-
-    useEffect(function () {
-      var newStateHandler = function (newStore) {
-        var newState = propsToConnectTo.reduce(function (acc, propName) {
-          if (propName in store) {
-            acc[propName] = newStore[propName];
-          }
-
-          return acc;
-        }, {}); // console.log('current state', state);
-        // console.log('new state', newState);
-        // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-
-        if (!twoLevelIsEqual(state, newState)) {
-          setState(newState);
-        }
-      };
-
-      pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
-
-      return function () {
-        return pubsub.unsubscribe(newStateHandler);
-      };
-    }, [state]);
-    return React.createElement(Component, _extends({}, state, props));
-  };
 };
+
 export var useGlobalStates = function (propsToConnectTo) {
   if (propsToConnectTo === void 0) {
     propsToConnectTo = [];
   }
 
-  var _useState2 = useState(propsToConnectTo.reduce(function (acc, propName) {
+  var _useState = useState(propsToConnectTo.reduce(function (acc, propName) {
     if (propName in store) {
       acc[propName] = store[propName];
     }
 
     return acc;
   }, {})),
-      state = _useState2[0],
-      setState = _useState2[1];
+      state = _useState[0],
+      setState = _useState[1];
 
+  var propNameHash = propsToConnectTo.slice().sort().join('|');
   useEffect(function () {
     var newStateHandler = function (newStore) {
       var newState = propsToConnectTo.reduce(function (acc, propName) {
-        if (propName in store) {
+        if (propName in newStore) {
           acc[propName] = newStore[propName];
         }
 
@@ -172,7 +126,7 @@ export var useGlobalStates = function (propsToConnectTo) {
 
     return function () {
       return pubsub.unsubscribe(newStateHandler);
-    };
-  }, [state]);
+    }; // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, propNameHash]);
   return state;
 };

@@ -1,5 +1,5 @@
 import _extends from "@babel/runtime/helpers/extends";
-import React, { useState, useEffect } from 'react'; // "The" global store
+import { useState, useEffect } from 'react'; // "The" global store
 
 let store = {}; // internal publisher-subscriber system to
 // notify containers of store changes.
@@ -27,9 +27,12 @@ const pubsub = {
     this.handlers.forEach(handler => handler(newStore));
   }
 
+};
+export const getStates = () => {
+  return _extends({}, store);
 }; // global state merger. unlike redux, I am not enforcing reducer layer
 
-export const updateState = partial => {
+export const updateStates = partial => {
   const newStore = _extends({}, store, {}, partial);
 
   store = newStore;
@@ -38,7 +41,7 @@ export const updateState = partial => {
 // e.g const updateCartState = createSubPropUpdater('cart');
 // updateCartState({ items: [], quantity: 0 });
 // this is equivalent to
-// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
+// updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
 
 export const createSubPropUpdater = propName => {
   return partial => {
@@ -49,12 +52,6 @@ export const createSubPropUpdater = propName => {
     store = newStore;
     pubsub.notify(newStore);
   };
-};
-export const setState = newState => {
-  const newStore = _extends({}, newState);
-
-  store = newStore;
-  pubsub.notify(newStore);
 }; // utility
 
 const plainObjectPrototype = Object.getPrototypeOf({});
@@ -80,43 +77,8 @@ const twoLevelIsEqual = (oldState, newState, level = 1) => {
   }
 
   return oldState === newState;
-}; // used to wrap components to receive global store props
-
-
-export const connect = (propsToConnectTo = [], Component) => {
-  return props => {
-    // state container
-    let [state, setState] = useState(propsToConnectTo.reduce((acc, propName) => {
-      if (propName in store) {
-        acc[propName] = store[propName];
-      }
-
-      return acc;
-    }, {}));
-    useEffect(() => {
-      const newStateHandler = newStore => {
-        const newState = propsToConnectTo.reduce((acc, propName) => {
-          if (propName in store) {
-            acc[propName] = newStore[propName];
-          }
-
-          return acc;
-        }, {}); // console.log('current state', state);
-        // console.log('new state', newState);
-        // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-
-        if (!twoLevelIsEqual(state, newState)) {
-          setState(newState);
-        }
-      };
-
-      pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
-
-      return () => pubsub.unsubscribe(newStateHandler);
-    }, [state]);
-    return React.createElement(Component, _extends({}, state, props));
-  };
 };
+
 export const useGlobalStates = (propsToConnectTo = []) => {
   let [state, setState] = useState(propsToConnectTo.reduce((acc, propName) => {
     if (propName in store) {
@@ -125,10 +87,11 @@ export const useGlobalStates = (propsToConnectTo = []) => {
 
     return acc;
   }, {}));
+  const propNameHash = propsToConnectTo.slice().sort().join('|');
   useEffect(() => {
     const newStateHandler = newStore => {
       const newState = propsToConnectTo.reduce((acc, propName) => {
-        if (propName in store) {
+        if (propName in newStore) {
           acc[propName] = newStore[propName];
         }
 
@@ -144,7 +107,7 @@ export const useGlobalStates = (propsToConnectTo = []) => {
 
     pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
 
-    return () => pubsub.unsubscribe(newStateHandler);
-  }, [state]);
+    return () => pubsub.unsubscribe(newStateHandler); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, propNameHash]);
   return state;
 };

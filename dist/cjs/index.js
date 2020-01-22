@@ -1,15 +1,13 @@
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
 exports.__esModule = true;
-exports.useGlobalStates = exports.connect = exports.setState = exports.createSubPropUpdater = exports.updateState = void 0;
+exports.useGlobalStates = exports.createSubPropUpdater = exports.updateStates = exports.getStates = void 0;
 
 var _extends3 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
-var _react = _interopRequireWildcard(require("react"));
+var _react = require("react");
 
 // "The" global store
 var store = {}; // internal publisher-subscriber system to
@@ -36,9 +34,16 @@ var pubsub = {
       return handler(newStore);
     });
   }
+};
+
+var getStates = function () {
+  return (0, _extends3.default)({}, store);
 }; // global state merger. unlike redux, I am not enforcing reducer layer
 
-var updateState = function (partial) {
+
+exports.getStates = getStates;
+
+var updateStates = function (partial) {
   var newStore = (0, _extends3.default)({}, store, {}, partial);
   store = newStore;
   pubsub.notify(newStore);
@@ -46,10 +51,10 @@ var updateState = function (partial) {
 // e.g const updateCartState = createSubPropUpdater('cart');
 // updateCartState({ items: [], quantity: 0 });
 // this is equivalent to
-// updateState({ cart: { ...store.cart, items: [], quantity: 0 } })
+// updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
 
 
-exports.updateState = updateState;
+exports.updateStates = updateStates;
 
 var createSubPropUpdater = function (propName) {
   return function (partial) {
@@ -59,18 +64,10 @@ var createSubPropUpdater = function (propName) {
     store = newStore;
     pubsub.notify(newStore);
   };
-};
-
-exports.createSubPropUpdater = createSubPropUpdater;
-
-var setState = function (newState) {
-  var newStore = (0, _extends3.default)({}, newState);
-  store = newStore;
-  pubsub.notify(newStore);
 }; // utility
 
 
-exports.setState = setState;
+exports.createSubPropUpdater = createSubPropUpdater;
 var plainObjectPrototype = Object.getPrototypeOf({});
 
 var twoLevelIsEqual = function (oldState, newState, level) {
@@ -106,74 +103,28 @@ var twoLevelIsEqual = function (oldState, newState, level) {
   }
 
   return oldState === newState;
-}; // used to wrap components to receive global store props
-
-
-var connect = function (propsToConnectTo, Component) {
-  if (propsToConnectTo === void 0) {
-    propsToConnectTo = [];
-  }
-
-  return function (props) {
-    // state container
-    var _useState = (0, _react.useState)(propsToConnectTo.reduce(function (acc, propName) {
-      if (propName in store) {
-        acc[propName] = store[propName];
-      }
-
-      return acc;
-    }, {})),
-        state = _useState[0],
-        setState = _useState[1];
-
-    (0, _react.useEffect)(function () {
-      var newStateHandler = function (newStore) {
-        var newState = propsToConnectTo.reduce(function (acc, propName) {
-          if (propName in store) {
-            acc[propName] = newStore[propName];
-          }
-
-          return acc;
-        }, {}); // console.log('current state', state);
-        // console.log('new state', newState);
-        // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-
-        if (!twoLevelIsEqual(state, newState)) {
-          setState(newState);
-        }
-      };
-
-      pubsub.subscribe(newStateHandler); // on component unmount, unsubscribe to prevent mem leak
-
-      return function () {
-        return pubsub.unsubscribe(newStateHandler);
-      };
-    }, [state]);
-    return _react.default.createElement(Component, (0, _extends3.default)({}, state, props));
-  };
 };
-
-exports.connect = connect;
 
 var useGlobalStates = function (propsToConnectTo) {
   if (propsToConnectTo === void 0) {
     propsToConnectTo = [];
   }
 
-  var _useState2 = (0, _react.useState)(propsToConnectTo.reduce(function (acc, propName) {
+  var _useState = (0, _react.useState)(propsToConnectTo.reduce(function (acc, propName) {
     if (propName in store) {
       acc[propName] = store[propName];
     }
 
     return acc;
   }, {})),
-      state = _useState2[0],
-      setState = _useState2[1];
+      state = _useState[0],
+      setState = _useState[1];
 
+  var propNameHash = propsToConnectTo.slice().sort().join('|');
   (0, _react.useEffect)(function () {
     var newStateHandler = function (newStore) {
       var newState = propsToConnectTo.reduce(function (acc, propName) {
-        if (propName in store) {
+        if (propName in newStore) {
           acc[propName] = newStore[propName];
         }
 
@@ -191,8 +142,8 @@ var useGlobalStates = function (propsToConnectTo) {
 
     return function () {
       return pubsub.unsubscribe(newStateHandler);
-    };
-  }, [state]);
+    }; // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, propNameHash]);
   return state;
 };
 
