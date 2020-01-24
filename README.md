@@ -169,3 +169,14 @@ Arguments:
 propName: The prop name whose sub/inner properties that you want to ultimately update.
 
 Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.
+
+##### createStore()
+
+Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
+
+The use-case for creating a new store (and not using the default store) would be for libraries/modules that is expected to be able to use with any react app.
+In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
+
+Arguments: None
+
+Returns: An object with functions to use the new store.
