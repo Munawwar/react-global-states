@@ -49,8 +49,8 @@ export const createStore = function createStore<YourStoreInterface>(initStore: Y
   // updateCartState({ items: [], quantity: 0 });
   // this is equivalent to
   // updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-  const createSubPropUpdater = <K extends StoreKeys>(propName: K) => {
-    return (partial: Partial<Pick<Store, K>>) => {
+  const createSubPropUpdater = <SubProp extends StoreKeys>(propName: SubProp) => {
+    return (partial: Partial<Pick<Store, SubProp>>) => {
       const newStore = {
         ...store,
         [propName]: {
