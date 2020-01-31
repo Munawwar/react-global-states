@@ -1,30 +1,31 @@
 import { useState, useEffect } from 'react';
 
-export const createStore = function createStore<YourStoreInterface>(initStore: Partial<YourStoreInterface> = {}) {
+export const createStore = function createStore<YourStoreInterface>(initStore: YourStoreInterface) {
   // "The" global store
-  type StoreType = Partial<YourStoreInterface>;
-  type HandlerType = (store: StoreType) => void;
-  type StoreKeys = keyof YourStoreInterface;
-  let store: StoreType = initStore;
+  type Store = YourStoreInterface;
+  type StoreKeys = keyof Store;
+  type Handler = (store: Store) => void;
+
+  let store = initStore;
   
   // internal publisher-subscriber system to
   // notify containers of store changes.
   const pubsub = {
-    handlers: [] as HandlerType[],
-    subscribe(handler: HandlerType) {
+    handlers: [] as Handler[],
+    subscribe(handler: Handler) {
       // console.log('subscribed');
       if (!this.handlers.includes(handler)) {
         this.handlers.push(handler);
       }
     },
-    unsubscribe(handler: HandlerType) {
+    unsubscribe(handler: Handler) {
       // console.log('unsubscribed');
       const index = this.handlers.indexOf(handler);
       if (index > -1) {
         this.handlers.splice(index, 1);
       }
     },
-    notify(newStore: StoreType) {
+    notify(newStore: Store) {
       this.handlers.forEach(handler => handler(newStore));
     }
   };
@@ -34,7 +35,7 @@ export const createStore = function createStore<YourStoreInterface>(initStore: P
   };
   
   // global state merger. unlike redux, I am not enforcing reducer layer
-  const updateStates = (partial: StoreType) => {
+  const updateStates = (partial: Store) => {
     const newStore = {
       ...store,
       ...partial,
@@ -48,8 +49,8 @@ export const createStore = function createStore<YourStoreInterface>(initStore: P
   // updateCartState({ items: [], quantity: 0 });
   // this is equivalent to
   // updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-  const createSubPropUpdater = (propName: StoreKeys) => {
-    return (partial: StoreType) => {
+  const createSubPropUpdater = <K extends StoreKeys>(propName: K) => {
+    return (partial: Partial<Pick<Store, K>>) => {
       const newStore = {
         ...store,
         [propName]: {
@@ -64,7 +65,7 @@ export const createStore = function createStore<YourStoreInterface>(initStore: P
   
   // utility
   const plainObjectPrototype = Object.getPrototypeOf({});
-  const twoLevelIsEqual = (oldState: StoreType, newState: StoreType, level = 1) => {
+  const twoLevelIsEqual = (oldState: Store, newState: Store, level = 1) => {
     if (
       oldState === null
       || newState === null
@@ -107,18 +108,18 @@ export const createStore = function createStore<YourStoreInterface>(initStore: P
           acc[propName] = store[propName];
         }
         return acc;
-      }, {} as StoreType),
+      }, {} as Store),
     );
   
     const propNameHash = propsToConnectTo.slice().sort().join('|');
     useEffect(() => {
-      const newStateHandler = (newStore: StoreType) => {
+      const newStateHandler = (newStore: Store) => {
         const newState = propsToConnectTo.reduce((acc, propName) => {
           if (propName in newStore) {
             acc[propName] = newStore[propName];
           }
           return acc;
-        }, {} as StoreType);
+        }, {} as Store);
         // console.log('current state', state);
         // console.log('new state', newState);
         // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
