@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export const createStore = function createStore<YourStoreInterface>(initStore: YourStoreInterface) {
   // "The" global store
   type Store = YourStoreInterface;
-  type StoreKeys = keyof Store;
+  type StoreKey = keyof Store;
   type Handler = (store: Store) => void;
 
   let store = initStore;
@@ -49,8 +49,8 @@ export const createStore = function createStore<YourStoreInterface>(initStore: Y
   // updateCartState({ items: [], quantity: 0 });
   // this is equivalent to
   // updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-  const createSubPropUpdater = <SubProp extends StoreKeys>(propName: SubProp) => {
-    return (partial: Partial<Pick<Store, SubProp>>) => {
+  const createSubPropUpdater = <Prop extends StoreKey>(propName: Prop) => {
+    return (partial: Partial<Store[Prop]>) => {
       const newStore = {
         ...store,
         [propName]: {
@@ -98,7 +98,7 @@ export const createStore = function createStore<YourStoreInterface>(initStore: Y
     return oldState === newState;
   };
   
-  const useGlobalStates = (propsToConnectTo: StoreKeys[]) => {
+  const useGlobalStates = (propsToConnectTo: StoreKey[]) => {
     let [
       state,
       setState,
@@ -164,10 +164,19 @@ export const createSubPropUpdater = defaultStore.createSubPropUpdater;
         sku: string,
       }[]
     }
+    test: {
+      test2: string
+    }
   }
-  const myStore = createStore<MyStoreType>({ greeting: 'hi', cart: { totalQty: 0, items: [] } });
+  const myStore = createStore<MyStoreType>({
+    greeting: 'hi',
+    cart: { totalQty: 0, items: [] },
+    test: { test2: 'hi' },
+  });
   const updateCart = myStore.createSubPropUpdater('cart');
   updateCart({ greeting: 'hi '}); // error
-  updateCart({ cart: [] }); // error
-  updateCart({ cart: { totalQty: 0, items: [] } }); // no error
+  updateCart({ cart: {} }); // error
+  updateCart({ test: {} }); // error
+  updateCart({ test2: 'h1' }); // error
+  updateCart({ totalQty: 0, items: [] }); // no error
  */
