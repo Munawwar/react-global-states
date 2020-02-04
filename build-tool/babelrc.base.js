@@ -1,7 +1,7 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 /* eslint-disable indent */
 module.exports = ({ pure, withModules, isUMD = false }) => ({
-	presets: [
+	presets: ['@babel/preset-typescript',
 		'@babel/preset-react',
 		...(pure
 			? []

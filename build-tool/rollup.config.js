@@ -56,7 +56,7 @@ const replacements = Object.entries(
 	return acc;
 }, {});
 
-const input = glob.sync(fromRoot(process.env.BUILD_INPUT || 'src/index.js'));
+const input = glob.sync(fromRoot(process.env.BUILD_INPUT || 'src/index.ts'));
 if (input.length > 1) {
 	throw new Error(
 		"This build doesn't support more than one entry point, since rollup's support for this is not very satisfying"
