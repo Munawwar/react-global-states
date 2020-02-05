@@ -65,13 +65,12 @@ That's it. Simple as that.
 
 It is good practice to move the updateStates() calls to separate "action" file.
 
-Within that file you can't use hooks though. So how to get the current states?
+Within that file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
 
-Use getStates():
 
 ```js
 import { getStates } from 'react-global-states';
-const { cart } = getStates();
+const { cart } = getStates(); // you get all the properties of the store
 ```
 
 
