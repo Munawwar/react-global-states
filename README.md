@@ -71,6 +71,10 @@ Within that file you can't use hooks though. Instead you can use getStates() to 
 ```js
 import { getStates } from 'react-global-states';
 const { cart } = getStates(); // you get all the properties of the store
+
+// in TypeScript, get getStates function from your specific store.
+// import { createStore } from 'react-global-states';
+// const { getStates } = createStore<MyStore>({ ... });
 ```
 
 
