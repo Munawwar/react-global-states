@@ -4,6 +4,8 @@ That is multiple React components can use shared global states to efficiently re
 
 ### Quick example
 
+ES6
+
 ```js
 import { useGlobalStates, updateStates } from 'react-global-states';
 const Component = (props) => {
@@ -25,19 +27,54 @@ const Component = (props) => {
 export default Component;
 ```
 
+TypeScript
+
+```ts
+import { createStore } from 'react-global-states';
+
+interface MyStore {
+  greeting: {
+    name: string;
+  }
+}
+
+const { useGlobalStates, updateStates } = createStore<MyStore>({
+  greeting: {
+    name: 'Dan'
+  }
+});
+
+const Component = (props) => {
+  // get only the level 1 properties you need from the global store
+  const { greeting: { name } } = useGlobalStates(['greeting']);
+
+  return (
+    <div>
+      Hi {name}
+      {/* for sake of demo, I am not placing the action logic in an action file */}
+      <button onClick={() => updateStates({ greeting: { name: 'everyone' }})}>Greet everyone</button>
+    </div>
+  );
+}
+export default Component;
+```
+
 That's it. Simple as that.
 
 ### Action file
 
 It is good practice to move the updateStates() calls to separate "action" file.
 
-Within that file you can't use hooks though. So how to get the current states?
+Within that file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
 
-Use getStates():
 
 ```js
 import { getStates } from 'react-global-states';
-const { cart } = getStates();
+const { cart } = getStates(); // you get all the properties of the store
+
+// in TypeScript, get getStates function from your specific store.
+// import { createStore } from 'react-global-states';
+// const { getStates } = createStore<MyStore>({ ... });
 ```
 
 
@@ -69,6 +106,9 @@ You can simplify this a bit by using createSubPropUpdater() helper method.
 
 ```js
 import { createSubPropUpdater } from 'react-global-states';
+// or in TypeScript, get createSubPropUpdater function from your specific store.
+// import { createStore } from 'react-global-states';
+// const { createSubPropUpdater } = createStore<MyStore>({ ... });
 
 const updateCartState = createSubPropUpdater('cart');
 
@@ -174,8 +214,11 @@ Returns: A function that you can call (any number of times) to incrementally upd
 
 Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
 
-The use-case for creating a new store (and not using the default store) would be for libraries/modules that is expected to be able to use with any react app.
-In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
+There are two use-cases for creating a fresh store, instead of using the default store:
+
+1. You are using TypeScript: For type checks to work you need to define your Store's interface. The default store accepts any props, which won't give you strict type check.
+
+2. You are writing a library/modules that is expected to be able to use with any react app: In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
 
 Arguments: None
 

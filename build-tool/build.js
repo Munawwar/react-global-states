@@ -129,6 +129,8 @@ function getBabelCommands() {
 			}),
 			`--presets ${babelrc}`,
 			`--out-dir dist/${name}`,
+				'--ignore src/**/*.test.ts',
+				'--ignore src/**/*.test.tsx',
 			'--ignore src/**/*.test.js',
 			'--ignore src/**/*.test.jsx',
 			`--extensions ${extensions.join(',')}`,
@@ -138,9 +140,21 @@ function getBabelCommands() {
 	}, {});
 }
 
+function generateTypesCommand() {
+	return {
+		generateTypes: [
+			resolveBin('typescript', {
+				executable: 'tsc',
+			}),
+			`--outDir dist/types`,
+			'--emitDeclarationOnly',
+		].join(' '),
+	};
+}
 
 rimraf.sync(fromRoot('dist'));
 const scripts = getConcurrentlyArgs({
+	...generateTypesCommand(),
 	...getRollupCommands(),
 	...getBabelCommands(),
 });
