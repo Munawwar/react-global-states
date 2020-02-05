@@ -8370,9 +8370,9 @@ react-error-overlay@^6.0.4:
   integrity sha512-ueZzLmHltszTshDMwyfELDq8zOA803wQ1ZuzCccXa1m57k1PxSHfflPD5W9YIiTXLs0JTLzoj6o1LuM5N6zzNA==
 
 react-global-states@*:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/react-global-states/-/react-global-states-2.0.1.tgz#a0d4fa0064cd09d0cb54dad991d0681143f3b40b"
-  integrity sha512-fyV71WIWrZ0l7DKsJ6/mjGvRrRWIF21qBOwKGjBNHSgkNZveP2J0vsTpXp6nGrPavW0+czg9sb5yjIoB+qoYQQ==
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/react-global-states/-/react-global-states-2.1.0.tgz#b39aae51139f1ea036d1da68160fad29ab84a241"
+  integrity sha512-dJOtTTxNX+A2xB8CiaL0lrtmS9CwicczIyXL+Yi1LmGHeeC4lmVgFLO/3yfYkfcZIAJ32R64Qh8JZpOHq+8p5Q==
 
 react-is@^16.8.1, react-is@^16.8.4:
   version "16.12.0"
