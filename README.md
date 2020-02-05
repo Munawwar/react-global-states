@@ -1,4 +1,4 @@
-react-global-states an easy-to-use shared/global state store for React projects.
+react-global-states is an easy-to-use global state store for React projects (using React hooks).
 
 That is multiple React components can use shared global states to efficiently rerender if states change.
 
