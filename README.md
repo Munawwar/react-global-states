@@ -4,6 +4,10 @@ That is multiple React components can use shared global states to efficiently re
 
 ### Quick example
 
+```
+npm install react-global-states
+```
+
 ES6
 
 ```js
