@@ -168,7 +168,7 @@ Returns: the entire global store.
 
 ##### updateStates(partial&lt;Object&gt;)
 
-Function to update multiple states on the global store. updateStates with spread your new states as level 1 props of store (it does not replace other existing props of the store).
+Function to update multiple states on the global store. updateStates will spread your new states as level 1 props of store (it does not replace other existing props of the store).
 
 So let's say your store looks like
 
@@ -214,7 +214,7 @@ propName: The prop name whose sub/inner properties that you want to ultimately u
 
 Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.
 
-##### createStore()
+##### createStore(initialStoreProps: Object)
 
 Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
 
@@ -224,6 +224,8 @@ There are two use-cases for creating a fresh store, instead of using the default
 
 2. You are writing a library/modules that is expected to be able to use with any react app: In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
 
-Arguments: None
+Arguments:
+
+initialStoreProps (optional): An object with properties to initialize your store with.
 
 Returns: An object with functions to use the new store.
