@@ -162,11 +162,14 @@ propNames[]: Array of prop names (strings) you want to fetch from global store
 
 Returns: an object with the key, values for each prop name you asked for. If a value doesn't exist you get undefined as the value for the prop name.
 
+<br><br>
 
 ##### getStates()
 To get states outside of a component (example: in an action file).
 
 Returns: the entire global store.
+
+<br><br>
 
 ##### updateStates(partial&lt;Object&gt;)
 
@@ -204,6 +207,8 @@ partial: An object with store props (as key-values) that you want to update.
 
 Returns: No return value
 
+<br><br>
+
 ##### createSubPropUpdater(propName&lt;String&gt;)
 
 Returns a function that you can use to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
@@ -215,6 +220,8 @@ Arguments:
 propName: The prop name whose sub/inner properties that you want to ultimately update.
 
 Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.
+
+<br><br>
 
 ##### createStore(initialStoreProps: Object)
 
