@@ -1,6 +1,6 @@
-react-global-states is an easy-to-use global state store for React projects (using React hooks).
+react-global-states is a global state store for React projects (using React hooks).
 
-That is multiple React components can use shared global states to efficiently rerender if states change.
+That is, multiple React components can use shared global states to efficiently rerender if states change.
 
 ### Quick example
 
@@ -8,7 +8,7 @@ That is multiple React components can use shared global states to efficiently re
 npm install react-global-states
 ```
 
-ES6
+JS
 
 ```js
 import { useGlobalStates, updateStates } from 'react-global-states';
@@ -64,6 +64,8 @@ export default Component;
 ```
 
 That's it. Simple as that.
+
+The library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next tow sections.
 
 ### Action file
 
@@ -133,7 +135,7 @@ function func2 () {
 
 The library only reacts to changes in level 1 and level 2 properties of the store object. This means you use PureComponent or React.memo() on your component only if manually passed props from parent components change often. 
 
-This may seems like an arbitrary decision, but from previous experience with libraries like Redux, it is mostly not a good idea to have highly nested global store. react-global-states takes that as good practice and enforces it here.
+This may seem like an arbitrary decision, but from previous experience with libraries like Redux on large projects, it is mostly not a good idea to have highly nested global store. react-global-states takes that as good practice and enforces it here.
 
 **So what happens if there is a third level of nesting?**
 Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
