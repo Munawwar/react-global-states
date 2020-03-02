@@ -65,7 +65,7 @@ export default Component;
 
 That's it. Simple as that.
 
-The library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next tow sections.
+The library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next two sections.
 
 ### Action file
 
