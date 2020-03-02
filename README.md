@@ -67,6 +67,14 @@ That's it. Simple as that.
 
 The library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next two sections.
 
+## Contents
+
+* [Action File](#action-file)
+* [Helper](#helper)
+* [Notes](#notes)
+* [Play with it](#play-with-it)
+* [API Reference](#api-reference)
+
 ### Action file
 
 It is good practice to move the updateStates() calls to separate "action" file.
