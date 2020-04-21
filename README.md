@@ -10,7 +10,7 @@ npm install react-global-states
 
 JS
 
-```js
+```jsx
 import { useGlobalStates, updateStates } from 'react-global-states';
 const Component = (props) => {
   // get only the level 1 properties you need from the global store
@@ -33,7 +33,7 @@ export default Component;
 
 TypeScript
 
-```ts
+```tsx
 import { createStore } from 'react-global-states';
 
 interface MyStore {
@@ -79,16 +79,43 @@ The library only has 5 exported functions in total - 3 of them demonstrated abov
 
 It is good practice to move the updateStates() calls to separate "action" file.
 
-Within that file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
+actions/greeting.js
+```js
+import { updateStates } from 'react-global-states';
+
+export const updateName = (name) => {
+  updateStates({ greeting: { name }});
+}
+```
+
+or typescript, actions/greeting.ts
+```ts
+import { updateStates } from './MyStore';
+
+export const updateName = (name: string) => {
+  updateStates({ greeting: { name }});
+}
+```
+
+And you can change the component to the following:
+```jsx
+import * as greetingActions from '../actions/greeting';
+// ...
+
+      <button onClick={() => greetingActions.updateName('everyone')}>Greet everyone</button>
+// ...
+```
+
+Within the action file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
 
 
 ```js
 import { getStates } from 'react-global-states';
-const { cart } = getStates(); // you get all the properties of the store
-
 // in TypeScript, get getStates function from your specific store.
-// import { createStore } from 'react-global-states';
-// const { getStates } = createStore<MyStore>({ ... });
+// const { getStates } from './MyStore';
+
+const allGlobalStatesOfTheStore = getStates(); // you get all the properties of the store
+const { greeting } = allGlobalStatesOfTheStore;
 ```
 
 
