@@ -1,11 +1,8 @@
 import React from 'react';
 import {
   updateStates,
-  createSubPropUpdater,
   useGlobalStates,
 } from 'react-global-states';
-
-const updateUserState = createSubPropUpdater('user');
 
 const Component = ({
   parentProp = '',
@@ -18,11 +15,11 @@ const Component = ({
     {parentProp}
     <br/>
     <br/>
-    <button onClick={() => updateUserState({ name: 'everyone' })}>Greet everyone instead</button>
+    <button onClick={() => updateStates({ name: 'everyone' })}>Greet everyone instead</button>
 
     <br/>
     <br/>
-    <button onClick={() => updateStates({ cart: { count: 0, items: [] }}) }>Change non-connected prop</button>
+    <button onClick={() => updateStates({ cart: { count: 0 }}) }>Change non-connected prop</button>
   </div>;
 };
 
