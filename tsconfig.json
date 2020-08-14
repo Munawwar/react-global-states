@@ -11,24 +11,27 @@
     ],
     "sourceMap": true,
     "allowJs": false,
-    "jsx": "preserve",
-    "declaration": true,
-    "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
+    "jsx": "preserve",
+    "noEmit": true,
+
+    "declaration": true,
+    "skipLibCheck": true,
+
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    
+    "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
+    "strict": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
   },
   "include": [
     "src"
@@ -38,6 +41,7 @@
     "build",
     "dist",
     "example",
-    "rollup.config.js"
+    "rollup.config.js",
+    "docs"
   ]
 }
