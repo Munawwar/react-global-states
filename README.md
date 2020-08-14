@@ -1,6 +1,6 @@
-react-global-states is a global state store for React projects (using React hooks).
+react-global-states is a global state store for React projects (using React hooks)..
 
-That is, multiple React components can use shared global states to efficiently rerender if states change.
+without the reducer, dispatch, thunk/saga, nested selector, provider, context etc ceremonies.
 
 ### Quick example
 
@@ -77,7 +77,7 @@ This library only has 5 exported functions in total - 3 of them demonstrated abo
 
 ### Action file
 
-It is good practice to move the updateStates() calls to separate "action" file. For e.g. you can unit testing the actions without having to test the UI components as well.
+It is good practice to move the updateStates() calls to separate "action" file. For e.g. you can unit test the actions without having to test the UI components as well.
 
 actions/greeting.js
 ```js
@@ -106,6 +106,8 @@ import * as greetingActions from '../actions/greeting';
 // ...
 ```
 
+Note: Actions can be async functions (yay! no thunk/saga required).
+
 Within the action file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
 
 
@@ -133,7 +135,7 @@ const initialStates = {
 createStore<MyStore>(initialStates);
 ```
 
-When using JS and using the default store you can initialize your store using `setStates()`.
+However if you are using the default store, you can initialize the store using `setStates()`.
 
 ```js
 import { setStates } from 'react-global-states';
@@ -155,7 +157,7 @@ This may seem like an arbitrary decision, but from previous experience with libr
 
 **So what happens if there is a third level of nesting?**
 Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
-So make sure if you do change 3rd or 4th level (or more) object, that you create a new 3rd level object everytime (using spread or whatever), so that component re-rendering is triggered.
+So if you do change 3rd or 4th level (or more) object,  make sure that you create a new 3rd level object everytime (using spread or whatever), so that component re-rendering is triggered.
 
 ### Play with it
 
@@ -253,6 +255,7 @@ initialStoreProps (optional): An object with properties to initialize your store
 
 Returns: An object with functions to use the new store.
 
+<br><br>
 
 ### Breaking changes v3
 
