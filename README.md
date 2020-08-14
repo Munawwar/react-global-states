@@ -65,7 +65,7 @@ export default Component;
 
 That's it. Simple as that.
 
-The library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next two sections.
+This library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next two sections.
 
 ## Contents
 
@@ -145,7 +145,7 @@ setStates({
 });
 ```
 
-`setStates()` simply replaces the entire store. It can be used elsewhere as well.
+`setStates()` simply replaces the entire store.
 
 ### Notes
 
@@ -181,16 +181,14 @@ Returns: an object with the key, values for each prop name you asked for. If a v
 <br><br>
 
 ##### getStates()
-To get states outside of a component (example: in an action file).
 
-Returns: the entire global store.
+Returns: the entire global store. You can use this outside of a component (example: in an action file).
 
 <br><br>
 
 ##### setStates(newStore&lt;Object&gt;)
 
-Returns a function that you can use to set the states of the entire store.
-Your entire store is replaced with the `newStore` object you send.
+Replaces your entire store with the `newStore` object you pass.
 
 Parameters:
 
@@ -216,7 +214,8 @@ So let's say your store looks likes the following:
 and you do an update as below:
 ```js
 updateStates({
-  prop2: { b: 0, d: 4 },
+  prop1: { a: 0 },
+  prop2: { d: 4 },
   prop3: { c: 3 },
 });
 ```
@@ -224,15 +223,15 @@ updateStates({
 then the resultant global store will look like:
 ```js
 {
-  prop1: { a: 1 },
-  prop2: { b: 0, d: 4 },
+  prop1: { a: 0 },
+  prop2: { b: 2, d: 4 },
   prop3: { c: 3 },
 }
 ```
 
 Parameters:
 
-partial: An partial store object with store props (as key-values) that you want to update.
+partial: An partial store object that would be used to update the store.
 
 Returns: No return value
 
@@ -257,10 +256,11 @@ Returns: An object with functions to use the new store.
 
 ### Breaking changes v3
 
-updatesStates() now will merge 2nd level properties unlike v2 which only merged 1st level properties.
+* updatesStates() now will merge 2nd level properties unlike v2 which only merged 1st level properties.
 
-Removed createSubPropUpdater() method. You can impleent the following for compatibility:
+* Removed createSubPropUpdater() method. updateStates() now can do the same job. However if you really need the compatibility, then you can implement it as follows:
 
 ```js
+import { updateStates } from 'react-global-states';
 const createSubPropUpdater = (propName) => (partial) => updateStates({ [propName]: partial });
 ```
