@@ -51,7 +51,7 @@ export var createStore = function (initStore) {
       var newValue = partial[propName];
 
       if (isPlainObject(oldValue) && isPlainObject(newValue)) {
-        newStore[propName] = _extends({}, oldValue, newValue);
+        newStore[propName] = _extends({}, oldValue, {}, newValue);
       } else {
         newStore[propName] = newValue;
       }
