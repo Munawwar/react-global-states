@@ -108,7 +108,7 @@ import * as greetingActions from '../actions/greeting';
 
 Note: Actions can be async functions (yay! no thunk/saga required).
 
-Within the action file you can't use hooks though. Instead you can use getStates() to get the current states in the store.
+Within the action file you can't use hooks though. Instead you can use getStates() to get the current states from the store.
 
 
 ```js
@@ -151,9 +151,9 @@ setStates({
 
 ### Notes
 
-The library only reacts to changes in level 1 and level 2 properties of the store object. This means you use PureComponent or React.memo() on your component only if manually passed props from parent components change often. 
+The library only reacts to changes in level 1 and level 2 properties of the store object.
 
-This may seem like an arbitrary decision, but from previous experience with libraries like Redux on large projects, it is mostly not a good idea to have highly nested global store. react-global-states takes that as good practice and enforces it here.
+This may seem like an arbitrary decision, but from previous experience with libraries like Redux on large projects, it is mostly not a good idea to have highly nested global store. Mostly because managing a tree is a lot harder. It involves selectors and re-mapping store properties to new names etc to improve performance, all of which adds unnecessary complexities/cognitive load, which could have been avoided if you flatten the global store in the first place. react-global-states takes that as good practice and enforces it here.
 
 **So what happens if there is a third level of nesting?**
 Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
