@@ -1,7 +1,7 @@
 {
 	"name": "react-global-states",
 	"homepage": "https://github.com/Munawwar/react-global-states",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "Simple global state store",
 	"repository": {
 		"type": "git",

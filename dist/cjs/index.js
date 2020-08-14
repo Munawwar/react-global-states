@@ -3,9 +3,9 @@
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
 exports.__esModule = true;
-exports.createSubPropUpdater = exports.updateStates = exports.getStates = exports.useGlobalStates = exports.createStore = void 0;
+exports.updateStates = exports.setStates = exports.getStates = exports.useGlobalStates = exports.createStore = void 0;
 
-var _extends3 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
+var _extends2 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
 var _react = require("react");
 
@@ -38,24 +38,38 @@ var createStore = function (initStore) {
   };
 
   var getStates = function () {
-    return (0, _extends3.default)({}, store);
+    return (0, _extends2.default)({}, store);
   }; // global state merger. unlike redux, I am not enforcing reducer layer
 
 
-  var updateStates = function (partial) {
-    var newStore = (0, _extends3.default)({}, store, {}, partial);
-    store = newStore;
-    pubsub.notify(newStore);
-  }; // curry function to partially update a sub property of global store.
-  // e.g const updateCartState = createSubPropUpdater('cart');
-  // updateCartState({ items: [], quantity: 0 });
-  // this is equivalent to
-  // updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-
-
-  // utility
   var plainObjectPrototype = Object.getPrototypeOf({});
 
+  var isPlainObject = function (obj) {
+    return Boolean(obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === plainObjectPrototype);
+  }; // updateStates merges properties upto two levels of the data store
+
+
+  var updateStates = function (partial) {
+    var newStore = (0, _extends2.default)({}, store);
+    var propNames = Object.keys(partial);
+
+    while (propNames.length) {
+      var propName = propNames.shift();
+      var oldValue = store[propName];
+      var newValue = partial[propName];
+
+      if (isPlainObject(oldValue) && isPlainObject(newValue)) {
+        newStore[propName] = (0, _extends2.default)({}, oldValue, {}, newValue);
+      } else {
+        newStore[propName] = newValue;
+      }
+    }
+
+    store = newStore;
+    pubsub.notify(newStore);
+  };
+
+  // utility
   var twoLevelIsEqual = function (oldState, newState, level) {
     if (level === void 0) {
       level = 1;
@@ -130,16 +144,11 @@ var createStore = function (initStore) {
       return state;
     },
     getStates: getStates,
-    updateStates: updateStates,
-    createSubPropUpdater: function createSubPropUpdater(propName) {
-      return function (partial) {
-        var _extends2;
-
-        var newStore = (0, _extends3.default)({}, store, (_extends2 = {}, _extends2[propName] = (0, _extends3.default)({}, store[propName] || {}, {}, partial), _extends2));
-        store = newStore;
-        pubsub.notify(newStore);
-      };
-    }
+    setStates: function setStates(newStore) {
+      store = newStore;
+      pubsub.notify(newStore);
+    },
+    updateStates: updateStates
   };
 };
 
@@ -147,8 +156,8 @@ exports.createStore = createStore;
 var defaultStore = createStore({});
 var useGlobalStates = defaultStore.useGlobalStates,
     getStates = defaultStore.getStates,
-    updateStates = defaultStore.updateStates,
-    createSubPropUpdater = defaultStore.createSubPropUpdater; // -------------- app code testing ------------------
+    setStates = defaultStore.setStates,
+    updateStates = defaultStore.updateStates; // -------------- app code testing ------------------
 
 /*
 interface MyStoreType {
@@ -164,20 +173,20 @@ interface MyStoreType {
 		test2: string;
 	};
 }
-const myStore = createStore<MyStoreType>({
+const { updateStates: updater } = createStore<MyStoreType>({
 	greeting: 'hi',
 	cart: { totalQty: 0, items: [] },
 	test: { test2: 'hi' },
 });
-const updateCart = myStore.createSubPropUpdater('cart');
-updateCart({ greeting: 'hi' }); // error
-updateCart({ cart: {} }); // error
-updateCart({ test: {} }); // error
-updateCart({ test2: 'h1' }); // error
-updateCart({ totalQty: 0, items: [] }); // no error
+updater({ greeting: 'hi' }); // no error
+updater({ cart: { greeting: 'hi' } }); // error
+updater({ cart: { cart: {} } }); // error
+updater({ cart: { test: {} } }); // error
+updater({ cart: { test2: 'h1' } }); // error
+updater({ cart: { totalQty: 0, items: [] } }); // no error
 */
 
-exports.createSubPropUpdater = createSubPropUpdater;
 exports.updateStates = updateStates;
+exports.setStates = setStates;
 exports.getStates = getStates;
 exports.useGlobalStates = useGlobalStates;

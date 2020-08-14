@@ -33,21 +33,33 @@ export const createStore = function (initStore) {
   const getStates = () => _extends({}, store); // global state merger. unlike redux, I am not enforcing reducer layer
 
 
+  const plainObjectPrototype = Object.getPrototypeOf({});
+
+  const isPlainObject = obj => Boolean(obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === plainObjectPrototype); // updateStates merges properties upto two levels of the data store
+
+
   const updateStates = partial => {
-    const newStore = _extends({}, store, {}, partial);
+    const newStore = _extends({}, store);
+
+    const propNames = Object.keys(partial);
+
+    while (propNames.length) {
+      const propName = propNames.shift();
+      const oldValue = store[propName];
+      const newValue = partial[propName];
+
+      if (isPlainObject(oldValue) && isPlainObject(newValue)) {
+        newStore[propName] = _extends({}, oldValue, {}, newValue);
+      } else {
+        newStore[propName] = newValue;
+      }
+    }
 
     store = newStore;
     pubsub.notify(newStore);
-  }; // curry function to partially update a sub property of global store.
-  // e.g const updateCartState = createSubPropUpdater('cart');
-  // updateCartState({ items: [], quantity: 0 });
-  // this is equivalent to
-  // updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-
+  };
 
   // utility
-  const plainObjectPrototype = Object.getPrototypeOf({});
-
   const twoLevelIsEqual = (oldState, newState, level = 1) => {
     if (oldState === null || newState === null || oldState === undefined || newState === undefined) {
       return oldState === newState;
@@ -105,23 +117,19 @@ export const createStore = function (initStore) {
       return state;
     },
     getStates,
-    updateStates,
-    createSubPropUpdater: propName => partial => {
-      const newStore = _extends({}, store, {
-        [propName]: _extends({}, store[propName] || {}, {}, partial)
-      });
-
+    setStates: newStore => {
       store = newStore;
       pubsub.notify(newStore);
-    }
+    },
+    updateStates
   };
 };
 const defaultStore = createStore({});
 export const {
   useGlobalStates,
   getStates,
-  updateStates,
-  createSubPropUpdater
+  setStates,
+  updateStates
 } = defaultStore; // -------------- app code testing ------------------
 
 /*
@@ -138,15 +146,15 @@ interface MyStoreType {
 		test2: string;
 	};
 }
-const myStore = createStore<MyStoreType>({
+const { updateStates: updater } = createStore<MyStoreType>({
 	greeting: 'hi',
 	cart: { totalQty: 0, items: [] },
 	test: { test2: 'hi' },
 });
-const updateCart = myStore.createSubPropUpdater('cart');
-updateCart({ greeting: 'hi' }); // error
-updateCart({ cart: {} }); // error
-updateCart({ test: {} }); // error
-updateCart({ test2: 'h1' }); // error
-updateCart({ totalQty: 0, items: [] }); // no error
+updater({ greeting: 'hi' }); // no error
+updater({ cart: { greeting: 'hi' } }); // error
+updater({ cart: { cart: {} } }); // error
+updater({ cart: { test: {} } }); // error
+updater({ cart: { test2: 'h1' } }); // error
+updater({ cart: { totalQty: 0, items: [] } }); // no error
 */
