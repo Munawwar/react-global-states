@@ -15,7 +15,7 @@ const Component = ({
     {parentProp}
     <br/>
     <br/>
-    <button onClick={() => updateStates({ name: 'everyone' })}>Greet everyone instead</button>
+    <button onClick={() => updateStates({ user: { name: 'everyone' } }) }>Greet everyone instead</button>
 
     <br/>
     <br/>
