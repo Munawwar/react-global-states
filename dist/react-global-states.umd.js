@@ -81,7 +81,7 @@
 	      var newValue = partial[propName];
 
 	      if (isPlainObject(oldValue) && isPlainObject(newValue)) {
-	        newStore[propName] = _extends_1({}, oldValue, {}, newValue);
+	        newStore[propName] = _extends_1({}, oldValue, newValue);
 	      } else {
 	        newStore[propName] = newValue;
 	      }
