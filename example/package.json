@@ -1,35 +1,28 @@
 {
   "name": "react-global-states-example",
-  "version": "0.1.0",
+  "homepage": "https://Munawwar.github.io/react-global-states",
+  "version": "0.0.0",
+  "license": "MIT",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-global-states": "^3.0.1",
-    "react-scripts": "3.3.0"
+    "react": "link:../node_modules/react",
+    "react-dom": "^16.9.0",
+    "react-scripts": "^3.0.1",
+    "react-global-states": "link:.."
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
   "eslintConfig": {
     "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }

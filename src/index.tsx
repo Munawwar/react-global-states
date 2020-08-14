@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import 'es7-object-polyfill';
 
 interface StoreMethods<Store> {
 	useGlobalStates(propsToConnectTo: (keyof Store)[]): Partial<Store>;
@@ -45,9 +46,9 @@ export const createStore = function createStore<YourStoreInterface>(
 	const plainObjectPrototype = Object.getPrototypeOf({});
 	const isPlainObject = (obj: unknown): boolean =>
 		Boolean(
-			obj &&
-				typeof obj === 'object' &&
-				Object.getPrototypeOf(obj) === plainObjectPrototype
+			obj
+				&& typeof obj === 'object'
+				&& Object.getPrototypeOf(obj) === plainObjectPrototype
 		);
 	// updateStates merges properties upto two levels of the data store
 	const updateStates = (partial: Partial<Store>): void => {
@@ -82,28 +83,27 @@ export const createStore = function createStore<YourStoreInterface>(
 		level = 1
 	): boolean => {
 		if (
-			oldState === null ||
-			newState === null ||
-			oldState === undefined ||
-			newState === undefined
+			oldState === null
+			|| newState === null
+			|| oldState === undefined
+			|| newState === undefined
 		) {
 			return oldState === newState;
 		}
 
 		const oldStatePrototype = Object.getPrototypeOf(oldState);
 		if (
-			level <= 2 &&
-			(oldStatePrototype === plainObjectPrototype || Array.isArray(oldState)) &&
-			oldStatePrototype === Object.getPrototypeOf(newState)
+			level <= 2
+			&& (oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
+			&& oldStatePrototype === Object.getPrototypeOf(newState)
 		) {
 			// check if all props of oldState is in newState
 			let isEqual = Object.entries(oldState).every(([key, val]) =>
 				twoLevelIsEqual(val, newState[key], level + 1)
 			);
 			// check if all props of newState is in oldState
-			isEqual =
-				isEqual &&
-				Object.entries(newState).every(([key, val]) =>
+			isEqual =				isEqual
+				&& Object.entries(newState).every(([key, val]) =>
 					twoLevelIsEqual(oldState[key], val, level + 1)
 				);
 			// if so, they are equal (upto two levels).

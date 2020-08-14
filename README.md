@@ -264,3 +264,5 @@ Returns: An object with functions to use the new store.
 import { updateStates } from 'react-global-states';
 const createSubPropUpdater = (propName) => (partial) => updateStates({ [propName]: partial });
 ```
+
+* no more ES5 support. distributions are in ES6
