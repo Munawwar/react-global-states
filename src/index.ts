@@ -3,10 +3,8 @@ import { useState, useEffect } from 'react';
 interface StoreMethods<Store> {
 	useGlobalStates(propsToConnectTo: (keyof Store)[]): Partial<Store>;
 	getStates(): Store;
-	updateStates(partial: Store): void;
-	createSubPropUpdater<Prop extends keyof Store>(
-		propName: Prop
-	): (partial: Partial<Store[Prop]>) => void;
+	setStates(newStore: Store): void;
+	updateStates(partial: Partial<Store>): void;
 }
 
 export const createStore = function createStore<YourStoreInterface>(
@@ -44,36 +42,40 @@ export const createStore = function createStore<YourStoreInterface>(
 	const getStates = (): YourStoreInterface => ({ ...store });
 
 	// global state merger. unlike redux, I am not enforcing reducer layer
-	const updateStates = (partial: Store): void => {
-		const newStore = {
-			...store,
-			...partial,
-		};
+	const plainObjectPrototype = Object.getPrototypeOf({});
+	const isPlainObject = (obj: unknown): boolean =>
+		Boolean(
+			obj &&
+				typeof obj === 'object' &&
+				Object.getPrototypeOf(obj) === plainObjectPrototype
+		);
+	// updateStates merges properties upto two levels of the data store
+	const updateStates = (partial: Partial<Store>): void => {
+		const newStore = { ...store };
+		const propNames = Object.keys(partial);
+		while (propNames.length) {
+			const propName: string = propNames.shift() as string;
+			const oldValue = store[propName];
+			const newValue = partial[propName];
+			if (isPlainObject(oldValue) && isPlainObject(newValue)) {
+				newStore[propName] = {
+					...oldValue,
+					...newValue,
+				};
+			} else {
+				newStore[propName] = newValue;
+			}
+		}
 		store = newStore;
 		pubsub.notify(newStore);
 	};
 
-	// curry function to partially update a sub property of global store.
-	// e.g const updateCartState = createSubPropUpdater('cart');
-	// updateCartState({ items: [], quantity: 0 });
-	// this is equivalent to
-	// updateStates({ cart: { ...store.cart, items: [], quantity: 0 } })
-	const createSubPropUpdater = <Prop extends StoreKey>(propName: Prop) => (
-		partial: Partial<Store[Prop]>
-	): void => {
-		const newStore = {
-			...store,
-			[propName]: {
-				...(store[propName] || {}),
-				...partial,
-			},
-		};
+	const setStates = (newStore: Store): void => {
 		store = newStore;
 		pubsub.notify(newStore);
 	};
 
 	// utility
-	const plainObjectPrototype = Object.getPrototypeOf({});
 	const twoLevelIsEqual = (
 		oldState: Store,
 		newState: Store,
@@ -156,8 +158,8 @@ export const createStore = function createStore<YourStoreInterface>(
 	return {
 		useGlobalStates,
 		getStates,
+		setStates,
 		updateStates,
-		createSubPropUpdater,
 	};
 };
 
@@ -166,8 +168,8 @@ const defaultStore = createStore({});
 export const {
 	useGlobalStates,
 	getStates,
+	setStates,
 	updateStates,
-	createSubPropUpdater,
 } = defaultStore;
 
 // -------------- app code testing ------------------
@@ -185,15 +187,15 @@ interface MyStoreType {
 		test2: string;
 	};
 }
-const myStore = createStore<MyStoreType>({
+const { updateStates: updater } = createStore<MyStoreType>({
 	greeting: 'hi',
 	cart: { totalQty: 0, items: [] },
 	test: { test2: 'hi' },
 });
-const updateCart = myStore.createSubPropUpdater('cart');
-updateCart({ greeting: 'hi' }); // error
-updateCart({ cart: {} }); // error
-updateCart({ test: {} }); // error
-updateCart({ test2: 'h1' }); // error
-updateCart({ totalQty: 0, items: [] }); // no error
+updater({ greeting: 'hi' }); // no error
+updater({ cart: { greeting: 'hi' } }); // error
+updater({ cart: { cart: {} } }); // error
+updater({ cart: { test: {} } }); // error
+updater({ cart: { test2: 'h1' } }); // error
+updater({ cart: { totalQty: 0, items: [] } }); // no error
 */

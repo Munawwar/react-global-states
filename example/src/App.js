@@ -1,11 +1,11 @@
 import React from 'react';
-import { updateStates } from 'react-global-states';
+import { setStates } from 'react-global-states';
 import StateTest from './StateTest';
 
 import './App.css';
 
 // initial state
-updateStates({
+setStates({
   cart: {
     count: 1,
     items: [{
