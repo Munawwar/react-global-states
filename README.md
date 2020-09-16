@@ -276,7 +276,7 @@ There are two use-cases for creating a fresh store, instead of using the default
 
 1. You are using TypeScript: For type checks to work you need to define your Store's interface. The default store accepts any props, which won't give you strict type check.
 
-2. You are writing a library/modules that is expected to be able to use with any react app: In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
+2. You are writing a library/module that is expected to be used with any react app: In which case polluting the default store with props can cause naming collision with the consumer of your library. Creating new store avoids prop name collisions for libraries.
 
 Parameters:
 
