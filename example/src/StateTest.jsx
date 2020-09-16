@@ -2,7 +2,10 @@ import React from 'react';
 import {
 	updateStates,
 	useGlobalStates,
+	createPropUpdater,
 } from 'react-global-states';
+
+const updateCart = createPropUpdater('cart');
 
 const Component = ({
 	parentProp = '',
@@ -20,7 +23,7 @@ const Component = ({
 
 			<br />
 			<br />
-			<button onClick={() => updateStates({ cart: { count: 0 } })}>Change non-connected prop</button>
+			<button onClick={() => updateCart({ count: 0 })}>Change non-connected prop</button>
 		</div>
 	);
 };

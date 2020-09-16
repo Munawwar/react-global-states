@@ -11,7 +11,12 @@ interface MyStore {
   }
 }
 
-const { useGlobalStates, updateStates, getStates } = createStore<MyStore>({
+const {
+	useGlobalStates,
+	updateStates,
+	getStates,
+	createPropUpdater,
+} = createStore<MyStore>({
 	user: {
 		name: 'me'
 	},
@@ -34,8 +39,18 @@ describe('react-global-states', () => {
 		updateStates({ cart: { quantity: 2 } });
 
 		const states = getStates();
-		// Check after total 1 sec
 		expect(states.cart?.quantity).toBe(2);
+		expect(states.user?.name).toBe('me');
+		expect(states.cart?.items).toEqual(['Item 1']);
+	});
+
+	it('createPropUpdater merges the given props properly', () => {
+		const updateCart = createPropUpdater('cart');
+		updateCart({ quantity: 3 });
+
+		const states = getStates();
+		expect(states.cart?.quantity).toBe(3);
+		expect(states.user?.name).toBe('me');
 		expect(states.cart?.items).toEqual(['Item 1']);
 	});
 });

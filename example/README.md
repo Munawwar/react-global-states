@@ -6,3 +6,7 @@ components react to the changes in the store.
 yarn install
 yarn start
 ```
+
+Type `showStates()` on browser console to see states any time.
+
+Note: `showStates()` is not part of the library. It is just a helper for this demo.

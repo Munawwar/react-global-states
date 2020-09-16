@@ -65,7 +65,7 @@ export default Component;
 
 That's it. Simple as that.
 
-This library only has 5 exported functions in total - 3 of them demonstrated above. The remaining 2 will be explained in the next two sections.
+This library only has 6 exported functions in total - 3 of them demonstrated above. Another 2 will be explained in the next two sections.
 
 ## Contents
 
@@ -239,6 +239,35 @@ Returns: No return value
 
 <br><br>
 
+##### createPropUpdater(propName&lt;String&gt;)
+
+Returns a function that can be used to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
+
+This is a convinence function. You can achieve what you want with updateStates() function alone if you wish.
+
+Arguments:
+
+propName: The prop name whose sub/inner properties that you want to ultimately update.
+
+Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.
+
+Example:
+
+```js
+// without createPropUpdater()
+const resetCart = () => updateStates({ cart: { items: [] } });
+const setCartItems = (items) => updateStates({ cart: { items } });
+// ...
+
+// with createPropUpdater()
+const updateCart = createPropUpdater('cart');
+const resetCart = () => updateCart({ items: [] });
+const setCartItems = (items) => updateCart({ items });
+// .. the more actions you have that is updating cart, the more useful createPropUpdater() becomes.
+```
+
+<br><br>
+
 ##### createStore(initialStoreProps: Object)
 
 Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
@@ -257,11 +286,15 @@ Returns: An object with functions to use the new store.
 
 <br><br>
 
+### Changes v3.1
+
+* Bring back createSubPropUpdater(). But it's named createPropUpdater() instead.
+
 ### Breaking changes v3
 
 * updatesStates() now will merge 2nd level properties unlike v2 which only merged 1st level properties.
 
-* Removed createSubPropUpdater() method. updateStates() now can do the same job. However if you really need the compatibility, then you can implement it as follows:
+* Renamed createSubPropUpdater() method. updateStates() now can do the same job. However if you really need the compatibility, then you can implement it as follows:
 
 ```js
 import { updateStates } from 'react-global-states';

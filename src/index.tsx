@@ -6,6 +6,9 @@ interface StoreMethods<Store> {
 	getStates(): Store;
 	setStates(newStore: Store): void;
 	updateStates(partial: Partial<Store>): void;
+	createPropUpdater<Prop extends keyof Store>(
+		propName: Prop
+	): (partial: Partial<Store[Prop]>) => void;
 }
 
 export const createStore = function createStore<YourStoreInterface>(
@@ -75,6 +78,15 @@ export const createStore = function createStore<YourStoreInterface>(
 		store = newStore;
 		pubsub.notify(newStore);
 	};
+
+	// curry function to partially update a sub property of global store.
+	// e.g const updateCart = createPropUpdater('cart');
+	// updateCart({ items: [], quantity: 0 });
+	// this is equivalent to
+	// updateStates({ cart: { items: [], quantity: 0 } })
+	const createPropUpdater = <Prop extends StoreKey>(propName: Prop) =>
+		(partial: Partial<Store[Prop]>): void =>
+			updateStates({ [propName]: partial } as Partial<Store>);
 
 	// utility
 	const twoLevelIsEqual = (
@@ -160,6 +172,7 @@ export const createStore = function createStore<YourStoreInterface>(
 		getStates,
 		setStates,
 		updateStates,
+		createPropUpdater,
 	};
 };
 
@@ -170,6 +183,7 @@ export const {
 	getStates,
 	setStates,
 	updateStates,
+	createPropUpdater,
 } = defaultStore;
 
 // -------------- app code testing ------------------

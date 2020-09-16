@@ -1,5 +1,5 @@
 import React from 'react';
-import { setStates } from 'react-global-states';
+import { setStates, getStates } from 'react-global-states';
 import StateTest from './StateTest';
 
 // initial state
@@ -15,6 +15,8 @@ setStates({
 		name: 'dan',
 	},
 });
+
+window.showStates = () => console.log(getStates());
 
 function App() {
 	return (
