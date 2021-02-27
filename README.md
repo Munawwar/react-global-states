@@ -1,6 +1,6 @@
 react-global-states is a global state store for React projects (using React hooks)..
 
-without the reducer, dispatch, thunk/saga, nested selector, provider, context etc ceremonies.
+without the reducer, dispatch, thunk/saga, nested selector etc ceremonies.
 
 ### Quick example
 
@@ -11,7 +11,12 @@ npm install react-global-states
 JS
 
 ```jsx
-import { useGlobalStates, updateStates } from 'react-global-states';
+import {
+  useGlobalStates,
+  updateStates,
+  Context,
+  store,
+} from 'react-global-states';
 const Component = (props) => {
   // get only the level 1 properties you need from the global store
   const {
@@ -28,13 +33,23 @@ const Component = (props) => {
     </div>
   );
 }
-export default Component;
+export default () => (
+  <Context.Provider value={store}>
+    <Component />
+  </Context.Provider>
+);
 ```
 
 TypeScript
 
 ```tsx
-import { createStore } from 'react-global-states';
+import { createContextAndHook, createStore } from 'react-global-states';
+
+const initialState = {
+  greeting: {
+    name: 'Dan'
+  }
+};
 
 interface MyStore {
   greeting: {
@@ -42,11 +57,9 @@ interface MyStore {
   }
 }
 
-const { useGlobalStates, updateStates } = createStore<MyStore>({
-  greeting: {
-    name: 'Dan'
-  }
-});
+const { useGlobalStates, Context } = createContextAndHook(initialState);
+const store = createStore<MyStore>(initialState);
+const { updateStates } = store;
 
 const Component = (props) => {
   // get only the level 1 properties you need from the global store
@@ -60,20 +73,69 @@ const Component = (props) => {
     </div>
   );
 }
-export default Component;
+export default () => (
+  <Context.Provider value={store}>
+    <Component />
+  </Context.Provider>
+);
 ```
 
-That's it. Simple as that.
-
-This library only has 6 exported functions in total - 3 of them demonstrated above. Another 2 will be explained in the next two sections.
+That's it. Simple as that. (Not quite.. when you want SSR things get complicated)
 
 ## Contents
 
+* [Server-side rendering](#ssr)
 * [Action File](#action-file)
 * [Initial States](#initial-states)
 * [Notes](#notes)
 * [Play with it](#play-with-it)
 * [API Reference](#api-reference)
+
+### Server-side rendering (SSR)
+#### Background
+So far you have been operating a single global store. Which is ok for purely client-side rendered app. When server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
+
+##### Workaround?
+You are probably asking at this point "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using next.js, whose render code is async, so this is not an option.
+
+#### Example
+
+You need to create a new store for every requested page render to support concurrency, and inject the store to the rest of your app via React's Context Provider.
+
+```js
+import { useContext } from 'react';
+import { createContextAndDependents, createStore } from 'react-global-states';
+
+const initialStates = { cart: [], user: 'john' };
+// context and hook is not created inside App
+const { useGlobalStates, Context } = createContextAndDependents(initialState);
+
+const Component = () => {
+  const { updateStates } = useContext(Context);
+  // get only the level 1 properties you need from the global store
+  const { greeting: { name } } = useGlobalStates(['greeting']);
+
+  return (
+    <div>
+      Hi {name}
+      {/* for sake of demo, I am not placing the action logic in an action file */}
+      <button onClick={() => updateStates({ greeting: { name: 'everyone' }})}>Greet everyone</button>
+    </div>
+  );
+};
+
+const App = () => {
+  // creating new store **inside app** makes this thing SSR safe.
+  // ofc on client-side re-using same store is needed. But will do that later.
+  const store = createStore(initialState);
+  return (
+    <Context.Provider value={store}>
+      <Component />
+    </Context.Provider>
+  );
+};
+
+```
 
 ### Action file
 
