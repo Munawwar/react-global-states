@@ -63,26 +63,25 @@ export const createStore = function createStore<Store>(
     );
   // updateStates merges properties upto two levels of the data store
   const updateStates = (partial: Partial<Store>): void => {
-    const newStore = { ...store };
     const propNames = Object.keys(partial);
     while (propNames.length) {
       const propName: string = propNames.shift() as string;
       const oldValue = store[propName];
       const newValue = partial[propName];
       if (isPlainObject(oldValue) && isPlainObject(newValue)) {
-        newStore[propName] = {
+        store[propName] = {
           ...oldValue,
           ...newValue,
         };
       } else {
-        newStore[propName] = newValue;
+        store[propName] = newValue;
       }
     }
-    store = newStore;
-    pubsub.notify(newStore);
+    pubsub.notify(store);
   };
 
   const setStates = (newStore: Store): void => {
+    // FIXME: causes entire app refresh, due to react context
     store = newStore;
     pubsub.notify(newStore);
   };
@@ -108,17 +107,23 @@ export const createStore = function createStore<Store>(
 
 // type ActionFunction = Function;
 type AnyType = any;
-type ActionCreatorsByNamespace<Store> = {
+type UnboundedActionsByNamespace<Store> = {
   [namespace: string]: {
     [functionName: string]: (storeMethods: StoreMethods<Store>) => AnyType
   }
 }
 interface ContextAndDependents<Store> {
   Context: React.Context<StoreMethods<Store>>,
-  useGlobalStates(propsToConnectTo: (keyof Store)[]): Partial<Store>,
-  bindActionCreators: <Props>(
+  /**
+   * This function is deprecated because people forget to remove unnecessary dependencies.
+   * Use useGlobalState() (singular) instead.
+   * @deprecated
+   */
+  useGlobalStates(propsToSelect: (keyof Store)[]): Partial<Store>,
+  useGlobalState<Prop extends keyof Store>(propToSelect: Prop): Pick<Store, Prop>|undefined
+  connect: <Props>(
     Component: React.ComponentType<Props>,
-    actionCreatorsByNamespace: ActionCreatorsByNamespace<Store>
+    unboundedActionsByNamespace?: UnboundedActionsByNamespace<Store>
   ) => React.FunctionComponent<Props>,
 }
 
@@ -168,7 +173,7 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
   }
 
   function useGlobalStates(
-    propsToConnectTo: StoreKey[]
+    propsToSelect: StoreKey[]
   ): Partial<Store> {
     const ret = useContext(Context);
     if (!ret) {
@@ -177,7 +182,7 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
     const { getStates, pubsub } = ret;
     const store = getStates();
     const [state, setState] = useState(
-      propsToConnectTo.reduce((acc, propName) => {
+      propsToSelect.reduce((acc, propName) => {
         if (propName in store) {
           acc[propName] = store[propName];
         }
@@ -185,13 +190,13 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
       }, {} as Store)
     );
 
-    const propNameHash = propsToConnectTo
+    const propNameHash = propsToSelect
       .slice()
       .sort()
       .join('|');
     useEffect(() => {
       const newStateHandler = (newStore: Store): void => {
-        const newState = propsToConnectTo.reduce((acc, propName) => {
+        const newState = propsToSelect.reduce((acc, propName) => {
           if (propName in newStore) {
             acc[propName] = newStore[propName];
           }
@@ -213,14 +218,21 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
     return state;
   }
 
-  function bindActionCreators<Props>(
+  function useGlobalState<Prop extends keyof Store>(
+    propToSelect: Prop
+  ): Pick<Store, Prop>|undefined {
+    const props = useGlobalStates([propToSelect]);
+    return props[propToSelect] as Pick<Store, Prop>|undefined;
+  }
+
+  function connect<Props>(
     Component: React.ComponentType<Props>,
-    actionCreatorsByNamespace: ActionCreatorsByNamespace<Store>
+    unboundedActionsByNamespace?: UnboundedActionsByNamespace<Store>,
   ) {
     return function ComponentWrapper(props: Props) {
       const storeMethods = useContext(Context);
       const propsToInject = Object
-        .entries(actionCreatorsByNamespace)
+        .entries(unboundedActionsByNamespace || {})
         .reduce((props, [namespace, actionCreators]) => {
           props[namespace] = Object
             .entries(actionCreators)
@@ -230,7 +242,7 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
             }, {});
           return props;
         }, {});
-      return <Component {...props} {...propsToInject} />;
+      return <Component {...props} {...propsToInject} store={storeMethods} />;
     } as React.FunctionComponent;
   }
 
@@ -240,12 +252,13 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
   return {
     Context: ReturnContext,
     useGlobalStates,
-    bindActionCreators,
+    useGlobalState,
+    connect,
   };
 }
 
 // default store
-export const { Context, useGlobalStates } = createContextAndDependents<{}>();
+export const { Context, useGlobalStates, useGlobalState } = createContextAndDependents<{}>();
 export const store = createStore({});
 export const {
   getStates,

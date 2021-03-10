@@ -1,14 +1,14 @@
-import React, { useContext } from 'react';
-import { useGlobalStates, Context, bindActionCreators } from './myStore';
+import React from 'react';
+import { useGlobalState, connect } from './storeHelpers';
 import * as cartActionCreators from './cart-actions';
 
 const Component = ({
 	parentProp = '',
+	store: { updateStates, updateCart },
 	cartActions,
 }) => {
-	const { updateStates, updateCart } = useContext(Context);
 	console.log('StateTest render...');
-	const { user: { name } = {} } = useGlobalStates(['user']);
+	const { name } = useGlobalState('user');
 	return (
 		<div>
 			Hi {name}
@@ -27,4 +27,4 @@ const Component = ({
 	);
 };
 
-export default bindActionCreators(Component, { cartActions: cartActionCreators });
+export default connect(Component, { cartActions: cartActionCreators });

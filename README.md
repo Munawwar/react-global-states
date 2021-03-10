@@ -1,4 +1,4 @@
-react-global-states is a global state store for React projects (using React hooks)..
+react-global-states is a global state store for React projects.
 
 without the reducer, dispatch, thunk/saga, nested selector etc ceremonies.
 
@@ -11,19 +11,12 @@ npm install react-global-states
 JS
 
 ```jsx
-import {
-  useGlobalStates,
-  updateStates,
-  Context,
-  store,
-} from 'react-global-states';
-const Component = (props) => {
-  // get only the level 1 properties you need from the global store
-  const {
-    greeting: {
-      name = 'Dan'
-    } = {}
-  } = useGlobalStates(['greeting']);
+import { useContext } from 'react';
+import { useGlobalState, Context } from 'react-global-states';
+const Component = () => {
+  // get a specific property from the global store
+  const { name = 'Dan' } = useGlobalState('greeting');
+  const { updateStates } = useContext(Context);
 
   return (
     <div>
@@ -33,38 +26,38 @@ const Component = (props) => {
     </div>
   );
 }
-export default () => (
-  <Context.Provider value={store}>
-    <Component />
-  </Context.Provider>
-);
+export default Component;
+
+// app.js
+import { Context, createStore } from 'react-global-states';
+
+const getInitialState = () => ({
+  greeting: {
+    name: 'Dan'
+  }
+});
+
+const App = () => {
+  const store = createStore(getInitialState());
+  return (
+    <Context.Provider value={store}>
+      <Component />
+    </Context.Provider>
+  );
+}
+export default App;
 ```
 
 TypeScript
 
 ```tsx
-import { createContextAndHook, createStore } from 'react-global-states';
+import { useContext } from 'react';
+import { useGlobalState, Context } from './storeHelpers';
 
-const initialState = {
-  greeting: {
-    name: 'Dan'
-  }
-};
-
-interface MyStore {
-  greeting: {
-    name: string;
-  }
-}
-
-const { useGlobalStates, Context } = createContextAndHook(initialState);
-const store = createStore<MyStore>(initialState);
-const { updateStates } = store;
-
-const Component = (props) => {
-  // get only the level 1 properties you need from the global store
-  const { greeting: { name } } = useGlobalStates(['greeting']);
-
+const Component = () => {
+  // get a specific property from the global store
+  const { name } = useGlobalState('greeting');
+  const { updateStates } = useContext(Context);
   return (
     <div>
       Hi {name}
@@ -73,11 +66,38 @@ const Component = (props) => {
     </div>
   );
 }
-export default () => (
-  <Context.Provider value={store}>
-    <Component />
-  </Context.Provider>
-);
+export default Component;
+
+// storeHelpers.ts
+import { createContextAndDependents } from 'react-global-states';
+
+type MyStore = {
+  greeting: {
+    name: string;
+  }
+}
+
+export const getInitialState = (): MyStore => ({
+  greeting: {
+    name: 'Dan'
+  }
+});
+
+export const { Context, useGlobalState, connect } = createContextAndDependents(getInitialState());
+
+// app.js
+import { createStore } from 'react-global-states';
+import { Context, getInitialState } from './storeHelpers';
+
+const App = () => {
+  const store = createStore(getInitialState());
+  return (
+    <Context.Provider value={store}>
+      <Component />
+    </Context.Provider>
+  );
+}
+export default App;
 ```
 
 That's it. Simple as that. (Not quite.. when you want SSR things get complicated)
@@ -93,49 +113,12 @@ That's it. Simple as that. (Not quite.. when you want SSR things get complicated
 
 ### Server-side rendering (SSR)
 #### Background
-So far you have been operating a single global store. Which is ok for purely client-side rendered app. When server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
+State managers like zustand creates a singleton store that gives a nicer API for purely client-side rendered app as compared to react-global-state. However if server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
 
-##### Workaround?
-You are probably asking at this point "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using next.js, whose render code is async, so this is not an option.
+##### Can singleton store have a workaround for SSR?
+You are probably thinking "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using next.js, whose render code is async, so this is not an option.
 
-#### Example
-
-You need to create a new store for every requested page render to support concurrency, and inject the store to the rest of your app via React's Context Provider.
-
-```js
-import { useContext } from 'react';
-import { createContextAndDependents, createStore } from 'react-global-states';
-
-const initialStates = { cart: [], user: 'john' };
-// context and hook is not created inside App
-const { useGlobalStates, Context } = createContextAndDependents(initialState);
-
-const Component = () => {
-  const { updateStates } = useContext(Context);
-  // get only the level 1 properties you need from the global store
-  const { greeting: { name } } = useGlobalStates(['greeting']);
-
-  return (
-    <div>
-      Hi {name}
-      {/* for sake of demo, I am not placing the action logic in an action file */}
-      <button onClick={() => updateStates({ greeting: { name: 'everyone' }})}>Greet everyone</button>
-    </div>
-  );
-};
-
-const App = () => {
-  // creating new store **inside app** makes this thing SSR safe.
-  // ofc on client-side re-using same store is needed. But will do that later.
-  const store = createStore(initialState);
-  return (
-    <Context.Provider value={store}>
-      <Component />
-    </Context.Provider>
-  );
-};
-
-```
+This is why it is necessary to create a new store on app launch (inside App component) and dependency inject the store to components via react context and other helpers provided (like connect()).
 
 ### Action file
 
@@ -143,43 +126,37 @@ It is good practice to move the updateStates() calls to separate "action" file. 
 
 actions/greeting.js
 ```js
-import { updateStates } from 'react-global-states';
-
-export const updateName = (name) => {
-  updateStates({ greeting: { name }});
-}
-```
-
-or typescript, actions/greeting.ts
-```ts
-import { updateStates } from './MyStore';
-
-export const updateName = (name: string) => {
-  updateStates({ greeting: { name }});
+export const updateName = (store) => (name) => {
+  store.updateStates({ greeting: { name }});
 }
 ```
 
 And you can change the component to the following:
 ```jsx
-import * as greetingActions from '../actions/greeting';
-// ...
+import { connect } from 'react-global-states';
+// in typescript, get connect function from your specific store. export connect() from createContextAndDependents first
+// import { connect } from './MyStore';
+import * as greetingActionCreators from '../actions/greeting';
 
+const Component = ({ greetingActions }) => {
+  // ...
       <button onClick={() => greetingActions.updateName('everyone')}>Greet everyone</button>
-// ...
+  // ...
+}
+
+connect(Component, { greetingActions: greetingActionCreators });
 ```
 
 Note: Actions can be async functions (yay! no thunk/saga required).
 
 Within the action file you can't use hooks though. Instead you can use getStates() to get the current states from the store.
 
-
 ```js
-import { getStates } from 'react-global-states';
-// in TypeScript, get getStates function from your specific store.
-// const { getStates } from './MyStore';
-
-const allGlobalStatesOfTheStore = getStates(); // you get all the properties of the store
-const { greeting } = allGlobalStatesOfTheStore;
+export const someAction = (store) => (name) => {
+  const allGlobalStatesOfTheStore = store.getStates(); // you get all the properties of the store
+  const { greeting } = allGlobalStatesOfTheStore;
+  // ...
+}
 ```
 
 ### Initial States
@@ -189,11 +166,11 @@ If you are using TypeScript or if you are creating an new store, you get the abi
 ```ts
 import { createStore } from 'react-global-states';
 
-const initialStates = {
+const getInitialStates = ():MyStore => ({
   greeting: {
     name: 'Dan'
   }
-};
+});
 createStore<MyStore>(initialStates);
 ```
 
@@ -232,15 +209,15 @@ and start playing with the example.
 
 ### API Reference
 
-##### useGlobalStates(propNames&lt;Array&gt;)
+##### useGlobalState(propName)
 
-React hook to fetch the properties you want from global store. Using the hook also associates the component with only those props you've asked for. This makes re-rendering performance much better.
+React hook to fetch a property from the the global store. Using the hook also associates the component with the property.
 
 Parameters:
 
-propNames[]: Array of prop names (strings) you want to fetch from global store
+propName: Property names (string) you want to fetch from global store
 
-Returns: an object with the key, values for each prop name you asked for. If a value doesn't exist you get undefined as the value for the prop name.
+Returns: The property you asked for. If a value doesn't exist you get undefined.
 
 <br><br>
 
@@ -301,11 +278,34 @@ Returns: No return value
 
 <br><br>
 
+##### connect(Component, { namespace: { actionCreator1: (store) => Function }})
+
+Parameters:
+
+Component: any react component
+
+ActionCreatorsByNamespace: Actions to bind to the component. Better explained via example:
+
+```
+const Component = ({ cartActions }) => {
+  const onClick = () => cartActions.updateQuantity(1);
+  // ...
+};
+
+connect(Component, {
+  cartActions: {
+    updateQuantity: (store) => (quantity) => store.updateStates({ cart: { quantity }});
+  },
+})
+```
+
+Returns: Wrapped Component
+
 ##### createPropUpdater(propName&lt;String&gt;)
 
 Returns a function that can be used to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
 
-This is a convinence function. You can achieve what you want with updateStates() function alone if you wish.
+This is a convenience function. You can achieve what you want with updateStates() function alone if you wish.
 
 Arguments:
 
@@ -347,6 +347,19 @@ initialStoreProps (optional): An object with properties to initialize your store
 Returns: An object with functions to use the new store.
 
 <br><br>
+
+### Breaking changes v4
+
+We have added SSR support. You have to wrap your App with Context.Provider now for things to work.
+
+useGlobalStates() is deprecated. Instead use useGlobalState() (singular).
+
+```js
+// old api
+const { cart: { quantity } } = useGlobalStates(['cart']);
+// new api
+const { quantity } = useGlobalState('cart');
+```
 
 ### Changes v3.1
 
