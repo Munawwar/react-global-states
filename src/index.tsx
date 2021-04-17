@@ -8,7 +8,7 @@ import 'es7-object-polyfill';
 
 const plainObjectPrototype = Object.getPrototypeOf({});
 
-interface StoreMethods<Store> {
+export interface StoreMethods<Store> {
   getStates(): Store;
   setStates(newStore: Store): void;
   updateStates(partial: Partial<Store>): void;
@@ -105,14 +105,20 @@ export const createStore = function createStore<Store>(
 };
 
 
-// type ActionFunction = Function;
-type AnyType = any;
-type UnboundedActionsByNamespace<Store> = {
-  [namespace: string]: {
-    [functionName: string]: (storeMethods: StoreMethods<Store>) => AnyType
-  }
-}
-interface ContextAndDependents<Store> {
+// type UnboundedActionsByNamespace<Store> = {
+//   [namespace: string]: {
+//     [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
+//   }
+// }
+// type BoundedActionsByNamespace<
+//   Store,
+//   ns extends keyof UnboundedActionsByNamespace<Store>
+// > = {
+//   [namespace: ns]: {
+//     [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
+//   }
+// }
+export interface ContextAndDependents<Store> {
   Context: React.Context<StoreMethods<Store>>,
   /**
    * This function is deprecated because people forget to remove unnecessary dependencies.
@@ -120,11 +126,30 @@ interface ContextAndDependents<Store> {
    * @deprecated
    */
   useGlobalStates(propsToSelect: (keyof Store)[]): Partial<Store>,
-  useGlobalState<Prop extends keyof Store>(propToSelect: Prop): Pick<Store, Prop>|undefined
-  connect: <Props>(
+  useGlobalState<Prop extends keyof Store>(propToSelect: Prop): Store[Prop],
+  connect: <
+    Props,
+    UnboundedActionsByNamespace extends {
+      [namespace: string]: {
+        [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
+      }
+    },
+
+
+    NamespaceKey extends keyof UnboundedActionsByNamespace,
+    NamespaceProps extends UnboundedActionsByNamespace[NamespaceKey],
+    FunctionName extends keyof NamespaceProps,
+    ActionCreator extends NamespaceProps[FunctionName],
+    Action extends ReturnType<ActionCreator>,
+    BoundedActionsByNamespace extends {
+      [namespace in NamespaceKey]: {
+        [functionName in FunctionName]: Action
+      }
+    }
+  >(
     Component: React.ComponentType<Props>,
-    unboundedActionsByNamespace?: UnboundedActionsByNamespace<Store>
-  ) => React.FunctionComponent<Props>,
+    unboundedActionsByNamespace?: UnboundedActionsByNamespace
+  ) => React.FunctionComponent<Props | BoundedActionsByNamespace>,
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -220,30 +245,50 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
 
   function useGlobalState<Prop extends keyof Store>(
     propToSelect: Prop
-  ): Pick<Store, Prop>|undefined {
+  ): Store[Prop] {
     const props = useGlobalStates([propToSelect]);
-    return props[propToSelect] as Pick<Store, Prop>|undefined;
+    return props[propToSelect] as Store[Prop];
   }
 
-  function connect<Props>(
+  function connect<
+    Props,
+    UnboundedActionsByNamespace extends {
+      [namespace: string]: {
+        [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
+      }
+    },
+
+
+    NamespaceKey extends keyof UnboundedActionsByNamespace,
+    NamespaceProps extends UnboundedActionsByNamespace[NamespaceKey],
+    FunctionName extends keyof NamespaceProps,
+    ActionCreator extends NamespaceProps[FunctionName],
+    Action extends ReturnType<ActionCreator>,
+    BoundedActionsByNamespace extends {
+      [namespace in NamespaceKey]: {
+        [functionName in FunctionName]: Action
+      }
+    }
+  >(
     Component: React.ComponentType<Props>,
-    unboundedActionsByNamespace?: UnboundedActionsByNamespace<Store>,
+    unboundedActionsByNamespace?: UnboundedActionsByNamespace
   ) {
     return function ComponentWrapper(props: Props) {
-      const storeMethods = useContext(Context);
+      const storeMethods = useContext(Context) as unknown as StoreMethods<Store>;
       const propsToInject = Object
         .entries(unboundedActionsByNamespace || {})
         .reduce((props, [namespace, actionCreators]) => {
           props[namespace] = Object
             .entries(actionCreators)
             .reduce((actions, [functionName, actionCreator]) => {
-              actions[functionName] = actionCreator(storeMethods as StoreMethods<Store>);
+              const actionFunc = actionCreator(storeMethods);
+              actions[functionName] = actionFunc;
               return actions;
-            }, {});
+            }, {} as { [functionName in FunctionName]: Action });
           return props;
-        }, {});
+        }, {} as BoundedActionsByNamespace);
       return <Component {...props} {...propsToInject} store={storeMethods} />;
-    } as React.FunctionComponent;
+    } as React.FunctionComponent<Props | BoundedActionsByNamespace>;
   }
 
   // were are making return value non-nullable, because null would throw error
@@ -253,6 +298,7 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
     Context: ReturnContext,
     useGlobalStates,
     useGlobalState,
+    // @ts-ignore
     connect,
   };
 }
