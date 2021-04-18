@@ -2,7 +2,7 @@ react-global-states is a global state store for React projects.
 
 without the reducer, dispatch, thunk/saga, nested selector etc ceremonies.
 
-### Quick example
+## Quick example
 
 ```
 npm install react-global-states
@@ -11,12 +11,11 @@ npm install react-global-states
 JS
 
 ```jsx
-import { useContext } from 'react';
-import { useGlobalState, Context } from 'react-global-states';
+import { useGlobalState, useStore } from 'react-global-states';
 const Component = () => {
   // get a specific property from the global store
   const { name = 'Dan' } = useGlobalState('greeting');
-  const { updateStates } = useContext(Context);
+  const { updateStates } = useStore();
 
   return (
     <div>
@@ -51,13 +50,12 @@ export default App;
 TypeScript
 
 ```tsx
-import { useContext } from 'react';
-import { useGlobalState, Context } from './storeHelpers';
+import { useGlobalState, useStore } from './storeHelpers';
 
 const Component = () => {
   // get a specific property from the global store
   const { name } = useGlobalState('greeting');
-  const { updateStates } = useContext(Context);
+  const { updateStates } = useStore();
   return (
     <div>
       Hi {name}
@@ -69,7 +67,7 @@ const Component = () => {
 export default Component;
 
 // storeHelpers.ts
-import { createContextAndDependents } from 'react-global-states';
+import { createContextAndHooks } from 'react-global-states';
 
 type MyStore = {
   greeting: {
@@ -83,7 +81,7 @@ export const getInitialState = (): MyStore => ({
   }
 });
 
-export const { Context, useGlobalState, connect } = createContextAndDependents(getInitialState());
+export const { Context, useGlobalState } = createContextAndHooks<MyStore>();
 
 // app.js
 import { createStore } from 'react-global-states';
@@ -100,51 +98,37 @@ const App = () => {
 export default App;
 ```
 
-That's it. Simple as that. (Not quite.. when you want SSR things get complicated)
+That's it. Simple as that.
 
-## Contents
+# Contents
 
-* [Server-side rendering](#ssr)
 * [Action File](#action-file)
 * [Initial States](#initial-states)
 * [Notes](#notes)
 * [Play with it](#play-with-it)
 * [API Reference](#api-reference)
-
-### Server-side rendering (SSR)
-#### Background
-State managers like zustand creates a singleton store that gives a nicer API for purely client-side rendered app as compared to react-global-state. However if server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
-
-##### Can singleton store have a workaround for SSR?
-You are probably thinking "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using next.js, whose render code is async, so this is not an option.
-
-This is why it is necessary to create a new store on app launch (inside App component) and dependency inject the store to components via react context and other helpers provided (like connect()).
-
-### Action file
+## Action file
 
 It is good practice to move the updateStates() calls to separate "action" file. For e.g. you can unit test the actions without having to test the UI components as well.
 
 actions/greeting.js
 ```js
-export const updateName = (store) => (name) => {
+export const updateName = (store, name) => {
   store.updateStates({ greeting: { name }});
 }
 ```
 
 And you can change the component to the following:
 ```jsx
-import { connect } from 'react-global-states';
-// in typescript, get connect function from your specific store. export connect() from createContextAndDependents first
-// import { connect } from './MyStore';
-import * as greetingActionCreators from '../actions/greeting';
+import { useStore } from 'react-global-states';
+import * as greetingActions from '../actions/greeting';
 
-const Component = ({ greetingActions }) => {
+const Component = () => {
+  const store = useStore();
   // ...
-      <button onClick={() => greetingActions.updateName('everyone')}>Greet everyone</button>
+      <button onClick={() => greetingActions.updateName(store, 'everyone')}>Greet everyone</button>
   // ...
 }
-
-connect(Component, { greetingActions: greetingActionCreators });
 ```
 
 Note: Actions can be async functions (yay! no thunk/saga required).
@@ -152,14 +136,14 @@ Note: Actions can be async functions (yay! no thunk/saga required).
 Within the action file you can't use hooks though. Instead you can use getStates() to get the current states from the store.
 
 ```js
-export const someAction = (store) => (name) => {
+export const someAction = (store, name) => {
   const allGlobalStatesOfTheStore = store.getStates(); // you get all the properties of the store
   const { greeting } = allGlobalStatesOfTheStore;
   // ...
 }
 ```
 
-### Initial States
+## Initial States
 
 If you are using TypeScript or if you are creating an new store, you get the ability to set initial states of the store while creating the store:
 
@@ -188,7 +172,10 @@ setStates({
 
 `setStates()` simply replaces the entire store.
 
-### Notes
+## Notes
+
+
+### Reactivity
 
 The library only reacts to changes in level 1 and level 2 properties of the store object.
 
@@ -198,7 +185,19 @@ This may seem like an arbitrary decision, but from previous experience with libr
 Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
 So if you do change 3rd or 4th level (or more) object,  make sure that you create a new 3rd level object everytime (using spread or whatever), so that component re-rendering is triggered.
 
-### Play with it
+### Q: "Why is this thing so complex"?
+
+Answer: Server-side rendering (SSR)
+
+#### Background
+State managers like zustand creates a singleton store that gives a nicer API for purely client-side rendered app as compared to react-global-state. However if server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
+
+#### Can singleton store have a workaround for SSR?
+You are probably thinking "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using `next.js`, whose render code is async, so this is not an option.
+
+This is why it is necessary to create a new store on app launch (inside App component) and dependency inject the store to components via react context.
+
+## Play with it
 
 Go to examples directory
 ```
@@ -207,9 +206,9 @@ yarn start
 ```
 and start playing with the example.
 
-### API Reference
+## API Reference
 
-##### useGlobalState(propName)
+#### useGlobalState(propName)
 
 React hook to fetch a property from the the global store. Using the hook also associates the component with the property.
 
@@ -221,13 +220,13 @@ Returns: The property you asked for. If a value doesn't exist you get undefined.
 
 <br><br>
 
-##### getStates()
+#### getStates()
 
 Returns: the entire global store. You can use this outside of a component (example: in an action file).
 
 <br><br>
 
-##### setStates(newStore&lt;Object&gt;)
+#### setStates(newStore&lt;Object&gt;)
 
 Replaces your entire store with the `newStore` object you pass.
 
@@ -239,7 +238,7 @@ Returns: No return value
 
 <br><br>
 
-##### updateStates(partial&lt;Object&gt;)
+#### updateStates(partial&lt;Object&gt;)
 
 Function to update multiple states on the global store. updateStates will merge new states upto two levels of the store.
 
@@ -278,30 +277,13 @@ Returns: No return value
 
 <br><br>
 
-##### connect(Component, { namespace: { actionCreator1: (store) => Function }})
+#### useStore()
 
-Parameters:
+Returns: Store methods for the store that was connected via context provider.
 
-Component: any react component
+<br><br>
 
-ActionCreatorsByNamespace: Actions to bind to the component. Better explained via example:
-
-```
-const Component = ({ cartActions }) => {
-  const onClick = () => cartActions.updateQuantity(1);
-  // ...
-};
-
-connect(Component, {
-  cartActions: {
-    updateQuantity: (store) => (quantity) => store.updateStates({ cart: { quantity }});
-  },
-})
-```
-
-Returns: Wrapped Component
-
-##### createPropUpdater(propName&lt;String&gt;)
+#### createPropUpdater(propName&lt;String&gt;)
 
 Returns a function that can be used to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
 
@@ -330,7 +312,7 @@ const setCartItems = (items) => updateCart({ items });
 
 <br><br>
 
-##### createStore(initialStoreProps: Object)
+#### createStore(initialStoreProps: Object)
 
 Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
 
@@ -348,7 +330,7 @@ Returns: An object with functions to use the new store.
 
 <br><br>
 
-### Breaking changes v4
+## Breaking changes v4
 
 We have added SSR support. You have to wrap your App with Context.Provider now for things to work.
 
@@ -361,11 +343,11 @@ const { cart: { quantity } } = useGlobalStates(['cart']);
 const { quantity } = useGlobalState('cart');
 ```
 
-### Changes v3.1
+## Changes v3.1
 
 * Bring back createSubPropUpdater(). But it's named createPropUpdater() instead.
 
-### Breaking changes v3
+## Breaking changes v3
 
 * updatesStates() now will merge 2nd level properties unlike v2 which only merged 1st level properties.
 

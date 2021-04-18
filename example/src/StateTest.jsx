@@ -1,14 +1,15 @@
 import React from 'react';
-import { useGlobalState, connect } from './storeHelpers';
+import { useGlobalState, useStore } from './storeHelpers';
 import * as cartActionCreators from './cart-actions';
 
 const Component = ({
 	parentProp = '',
+	store,
 	store: { updateStates, updateCart },
-	cartActions,
 }) => {
 	console.log('StateTest render...');
 	const { name } = useGlobalState('user');
+	const store = useStore();
 	return (
 		<div>
 			Hi {name}
@@ -22,9 +23,9 @@ const Component = ({
 			<br />
 			<button onClick={() => updateCart({ count: 0 })}>Change non-connected prop</button>
 			<br />
-			<button onClick={() => cartActions.incrementQuantity()}>Change another non-connected prop</button>
+			<button onClick={() => cartActionCreators.incrementQuantity(store)}>Change another non-connected prop</button>
 		</div>
 	);
 };
 
-export default connect(Component, { cartActions: cartActionCreators });
+export default Component;

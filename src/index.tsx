@@ -104,20 +104,6 @@ export const createStore = function createStore<Store>(
   };
 };
 
-
-// type UnboundedActionsByNamespace<Store> = {
-//   [namespace: string]: {
-//     [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
-//   }
-// }
-// type BoundedActionsByNamespace<
-//   Store,
-//   ns extends keyof UnboundedActionsByNamespace<Store>
-// > = {
-//   [namespace: ns]: {
-//     [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
-//   }
-// }
 export interface ContextAndDependents<Store> {
   Context: React.Context<StoreMethods<Store>>,
   /**
@@ -127,33 +113,14 @@ export interface ContextAndDependents<Store> {
    */
   useGlobalStates(propsToSelect: (keyof Store)[]): Partial<Store>,
   useGlobalState<Prop extends keyof Store>(propToSelect: Prop): Store[Prop],
-  connect: <
-    Props,
-    UnboundedActionsByNamespace extends {
-      [namespace: string]: {
-        [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
-      }
-    },
-
-
-    NamespaceKey extends keyof UnboundedActionsByNamespace,
-    NamespaceProps extends UnboundedActionsByNamespace[NamespaceKey],
-    FunctionName extends keyof NamespaceProps,
-    ActionCreator extends NamespaceProps[FunctionName],
-    Action extends ReturnType<ActionCreator>,
-    BoundedActionsByNamespace extends {
-      [namespace in NamespaceKey]: {
-        [functionName in FunctionName]: Action
-      }
-    }
-  >(
-    Component: React.ComponentType<Props>,
-    unboundedActionsByNamespace?: UnboundedActionsByNamespace
-  ) => React.FunctionComponent<Props | BoundedActionsByNamespace>,
+  useStore(): StoreMethods<Store>,
+  useUnwrappedAction<Action extends Function>(
+    wrappedAction: (storeMethods: StoreMethods<Store>) => Action
+  ): Action
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDependents<Store> {
+export function createContextAndHooks<Store>(_ignore?: Store): ContextAndDependents<Store> {
   type StoreKey = keyof Store;
 
   const Context = createContext<StoreMethods<Store>|null>(null);
@@ -200,11 +167,11 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
   function useGlobalStates(
     propsToSelect: StoreKey[]
   ): Partial<Store> {
-    const ret = useContext(Context);
-    if (!ret) {
+    const storeMethods = useContext(Context);
+    if (!storeMethods) {
       throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
     }
-    const { getStates, pubsub } = ret;
+    const { getStates, pubsub } = storeMethods;
     const store = getStates();
     const [state, setState] = useState(
       propsToSelect.reduce((acc, propName) => {
@@ -250,46 +217,37 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
     return props[propToSelect] as Store[Prop];
   }
 
-  function connect<
-    Props,
-    UnboundedActionsByNamespace extends {
-      [namespace: string]: {
-        [functionName: string]: (storeMethods: StoreMethods<Store>) => Function
-      }
-    },
-
-
-    NamespaceKey extends keyof UnboundedActionsByNamespace,
-    NamespaceProps extends UnboundedActionsByNamespace[NamespaceKey],
-    FunctionName extends keyof NamespaceProps,
-    ActionCreator extends NamespaceProps[FunctionName],
-    Action extends ReturnType<ActionCreator>,
-    BoundedActionsByNamespace extends {
-      [namespace in NamespaceKey]: {
-        [functionName in FunctionName]: Action
-      }
-    }
-  >(
-    Component: React.ComponentType<Props>,
-    unboundedActionsByNamespace?: UnboundedActionsByNamespace
-  ) {
-    return function ComponentWrapper(props: Props) {
-      const storeMethods = useContext(Context) as unknown as StoreMethods<Store>;
-      const propsToInject = Object
-        .entries(unboundedActionsByNamespace || {})
-        .reduce((props, [namespace, actionCreators]) => {
-          props[namespace] = Object
-            .entries(actionCreators)
-            .reduce((actions, [functionName, actionCreator]) => {
-              const actionFunc = actionCreator(storeMethods);
-              actions[functionName] = actionFunc;
-              return actions;
-            }, {} as { [functionName in FunctionName]: Action });
-          return props;
-        }, {} as BoundedActionsByNamespace);
-      return <Component {...props} {...propsToInject} store={storeMethods} />;
-    } as React.FunctionComponent<Props | BoundedActionsByNamespace>;
+  function useStore() {
+    return useContext(Context) as unknown as StoreMethods<Store>;
   }
+
+  function useUnwrappedAction<Action extends Function>(
+    wrappedAction: (storeMethods: StoreMethods<Store>) => Action
+  ) {
+    const storeMethods = useContext(Context) as unknown as StoreMethods<Store>;
+    const action = wrappedAction(storeMethods);
+    return action;
+  }
+
+  // function useUnwrappedActions<
+  //   Action extends Function,
+  //   WrappedActions extends {
+  //     [name: string]: (storeMethods: StoreMethods<Store>) => Action
+  //   }
+  // >(
+  //   wrappedActions: WrappedActions
+  // ): {
+  //   [ActionName in keyof WrappedActions]: ReturnType<WrappedActions[ActionName]>
+  // } {
+  //   const storeMethods = useContext(Context) as unknown as StoreMethods<Store>;
+  //   const actions = Object.fromEntries(
+  //     Object.entries(wrappedActions).map(([functionName, wrappedAction]) => [
+  //       functionName,
+  //       wrappedAction(storeMethods),
+  //     ])
+  //   );
+  //   return actions as never;
+  // }
 
   // were are making return value non-nullable, because null would throw error
   // with the hook. So once provider is properly initialized, it would contain Store.
@@ -298,13 +256,19 @@ export function createContextAndDependents<Store>(_ignore?: Store): ContextAndDe
     Context: ReturnContext,
     useGlobalStates,
     useGlobalState,
-    // @ts-ignore
-    connect,
+    useStore,
+    useUnwrappedAction,
   };
 }
 
 // default store
-export const { Context, useGlobalStates, useGlobalState } = createContextAndDependents<{}>();
+export const {
+  Context,
+  useGlobalStates,
+  useGlobalState,
+  useStore,
+  useUnwrappedAction,
+} = createContextAndHooks<{}>();
 export const store = createStore({});
 export const {
   getStates,
