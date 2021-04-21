@@ -98,7 +98,7 @@ const App = () => {
 export default App;
 ```
 
-That's it. Simple as that.
+Not so simple as with pure client-side rendered apps.
 
 # Contents
 
