@@ -393,7 +393,7 @@ const setCartItems = (items) => updateCart({ items });
 
 #### createStore(initialStoreProps: Object)
 
-Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates(), store.useGlobalStates() hook etc) to manage the new store.
+Creates a new store and returns an object with functions with same name & interface as the APIs mentioned above (i.e. store.getStates()) to manage the new store.
 
 There are two use-cases for creating a fresh store, instead of using the default store:
 

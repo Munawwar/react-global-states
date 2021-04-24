@@ -169,7 +169,7 @@ export function createHooks<Store>(
   function useGlobalState<Prop extends StoreKey>(
     propToSelect: Prop
   ): Store[Prop] {
-    let storeMethods;
+    let storeMethods: StoreMethods<Store> | undefined;
     if (context) {
       storeMethods = useContext(context) || undefined;
       if (!storeMethods) {
@@ -182,9 +182,19 @@ export function createHooks<Store>(
       }
     }
     const { getStates, pubsub } = storeMethods;
-    const store = getStates();
-    const [state, setState] = useState(store[propToSelect]);
+    const allStates = getStates();
+    let [state, setState] = useState(allStates[propToSelect]);
+    const [previousStore, setPreviousStore] = useState(storeMethods);
+
+    // manage subscription
     useEffect(() => {
+      // if store has changed then reset state from new store.
+      if (storeMethods !== previousStore) {
+        state = allStates[propToSelect];
+        setState(state);
+        setPreviousStore(storeMethods as StoreMethods<Store>);
+      }
+
       const newStateHandler = (newStore: Store): void => {
         const newState = newStore[propToSelect];
         // console.log('current state', state);
@@ -195,10 +205,10 @@ export function createHooks<Store>(
         }
       };
       pubsub.subscribe(newStateHandler);
-      // on component unmount, unsubscribe to prevent mem leak
+      // unsubscribe on component unmount or store change
       return (): void => pubsub.unsubscribe(newStateHandler);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state, propToSelect]);
+    }, [state, storeMethods, propToSelect]);
 
     return state;
   }
