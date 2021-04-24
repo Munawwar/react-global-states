@@ -1,5 +1,13 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { createStore, createContextAndHooks } from './index';
+import {
+	createStore,
+	createContextAndHooks,
+	useGlobalState as useGlobalStateCSRStore,
+	getStates as getStatesCSRStore,
+	setStates as setStatesCSRStore,
+	updateStates as updateStatesCSRStore,
+	createPropUpdater as createPropUpdaterCSRStore,
+} from './index';
 import React from 'react';
 
 interface MyStore {
@@ -12,7 +20,7 @@ interface MyStore {
   }
 }
 
-const initialState = {
+setStatesCSRStore({
 	user: {
 		name: 'me'
 	},
@@ -20,14 +28,22 @@ const initialState = {
 		quantity: 1,
 		items: ['Item 1'],
 	}
-};
+});
+
 export const {
 	Context,
-	useGlobalStates,
 	useGlobalState,
 	useStore,
 } = createContextAndHooks<MyStore>();
-const store = createStore<MyStore>(initialState);
+const store = createStore<MyStore>({
+	user: {
+		name: 'him'
+	},
+	cart: {
+		quantity: 2,
+		items: ['Item 2'],
+	}
+});
 const {
 	updateStates,
 	getStates,
@@ -38,31 +54,41 @@ const {
 jest.useFakeTimers();
 
 describe('react-global-states', () => {
-	it('useGlobalStates gets the store props', () => {
-		const wrapper: React.FunctionComponent = ({ children }) => (
-			<Context.Provider value={store}>{children}</Context.Provider>
-		);
-		const { result } = renderHook(() => useGlobalStates(['cart']), { wrapper });
-		expect(result.current.cart?.quantity).toBe(1);
+	it('CSR - useGlobalState gets the store props', () => {
+		// @ts-ignore
+		const { result } = renderHook(() => useGlobalStateCSRStore('cart'));
+		// @ts-ignore
+		expect(result.current?.quantity).toBe(1);
 	});
-	it('useGlobalState gets the store props', () => {
+	it('SSR - useGlobalState gets the store props', () => {
 		const wrapper: React.FunctionComponent = ({ children }) => (
 			<Context.Provider value={store}>{children}</Context.Provider>
 		);
 		const { result } = renderHook(() => useGlobalState('cart'), { wrapper });
-		expect(result.current?.quantity).toBe(1);
+		expect(result.current?.quantity).toBe(2);
 	});
 
-	it('updateStates merges level 2 props properly', () => {
-		updateStates({ cart: { quantity: 2 } });
+	it('CSR - updateStates merges level 2 props properly', () => {
+		updateStatesCSRStore({ cart: { quantity: 3 } });
 
-		const states = getStates();
-		expect(states.cart?.quantity).toBe(2);
+		const states = getStatesCSRStore();
+		// @ts-ignore
+		expect(states.cart?.quantity).toBe(3);
+		// @ts-ignore
 		expect(states.user?.name).toBe('me');
+		// @ts-ignore
 		expect(states.cart?.items).toEqual(['Item 1']);
 	});
+	it('SSR - updateStates merges level 2 props properly', () => {
+		updateStates({ cart: { quantity: 4 } });
 
-	it('useStore returns same store', () => {
+		const states = getStates();
+		expect(states.cart?.quantity).toBe(4);
+		expect(states.user?.name).toBe('him');
+		expect(states.cart?.items).toEqual(['Item 2']);
+	});
+
+	it('SSR - useStore returns same store', () => {
 		const wrapper: React.FunctionComponent = ({ children }) => (
 			<Context.Provider value={store}>{children}</Context.Provider>
 		);
@@ -70,13 +96,27 @@ describe('react-global-states', () => {
 		expect(result.current).toEqual(store);
 	});
 
-	it('createPropUpdater merges the given props properly', () => {
+	it('CSR - createPropUpdater merges the given props properly', () => {
+		// @ts-ignore
+		const updateCart = createPropUpdaterCSRStore('cart');
+		// @ts-ignore
+		updateCart({ quantity: 5 });
+
+		const states = getStatesCSRStore();
+		// @ts-ignore
+		expect(states.cart?.quantity).toBe(5);
+		// @ts-ignore
+		expect(states.user?.name).toBe('me');
+		// @ts-ignore
+		expect(states.cart?.items).toEqual(['Item 1']);
+	});
+	it('SSR - createPropUpdater merges the given props properly', () => {
 		const updateCart = createPropUpdater('cart');
-		updateCart({ quantity: 3 });
+		updateCart({ quantity: 6 });
 
 		const states = getStates();
-		expect(states.cart?.quantity).toBe(3);
-		expect(states.user?.name).toBe('me');
-		expect(states.cart?.items).toEqual(['Item 1']);
+		expect(states.cart?.quantity).toBe(6);
+		expect(states.user?.name).toBe('him');
+		expect(states.cart?.items).toEqual(['Item 2']);
 	});
 });

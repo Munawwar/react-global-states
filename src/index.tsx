@@ -81,7 +81,6 @@ export const createStore = function createStore<Store>(
   };
 
   const setStates = (newStore: Store): void => {
-    // FIXME: causes entire app refresh, due to react context
     store = newStore;
     pubsub.notify(newStore);
   };
@@ -104,57 +103,60 @@ export const createStore = function createStore<Store>(
   };
 };
 
-export interface ContextAndDependents<Store> {
-  Context: React.Context<StoreMethods<Store>>,
-  /**
-   * This function is deprecated because people forget to remove unnecessary dependencies.
-   * Use useGlobalState() (singular) instead.
-   * @deprecated
-   */
-  useGlobalStates(propsToSelect: (keyof Store)[]): Partial<Store>,
+export interface Hooks<Store> {
   useGlobalState<Prop extends keyof Store>(propToSelect: Prop): Store[Prop],
   useStore(): StoreMethods<Store>,
   useUnwrappedAction<Action extends Function>(
     wrappedAction: (storeMethods: StoreMethods<Store>) => Action
   ): Action
 }
+export interface ContextAndHooks<Store> extends Hooks<Store> {
+  Context: React.Context<StoreMethods<Store>>,
+}
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function createContextAndHooks<Store>(_ignore?: Store): ContextAndDependents<Store> {
+/**
+ * Hooks can be created either for a client side only rendered app or server side rendered app
+ * SSR apps includes CSR requirements (it's like a superset). CSR gives simpler APIs.
+ * 
+ * So for SRR, context is mandatory (and don't pass fixedStore)
+ * For CSR, fixedStore is mandatory (and don't pass context)
+ */
+export function createHooks<Store>(
+  fixedStore?: StoreMethods<Store>,
+  context?: React.Context<StoreMethods<Store>|null>,
+): Hooks<Store> {
+  if (!context && !fixedStore) {
+    throw new Error('Cannot use createHooks(). Please pass store or context.');
+  }
   type StoreKey = keyof Store;
 
-  const Context = createContext<StoreMethods<Store>|null>(null);
-
   // utility
-  function twoLevelIsEqual(
-    oldState: Store,
-    newState: Store,
-    level = 1
+  const isNullish = (val: unknown) => val === null || val === undefined;
+  function isShallowEqual<Prop extends StoreKey>(
+    oldState: Store[Prop],
+    newState: Store[Prop],
   ): boolean {
     if (
-      oldState === null
-      || newState === null
-      || oldState === undefined
-      || newState === undefined
+      isNullish(oldState)
+      || isNullish(newState)
+      || typeof oldState !== 'object'
+      || typeof newState !== 'object'
     ) {
       return oldState === newState;
     }
 
     const oldStatePrototype = Object.getPrototypeOf(oldState);
-    if (
-      level <= 2
-      && (oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
+    if ((oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
       && oldStatePrototype === Object.getPrototypeOf(newState)
     ) {
       // check if all props of oldState is in newState
-      let isEqual = Object.entries(oldState).every(([key, val]) =>
-        twoLevelIsEqual(val, newState[key], level + 1)
-      );
+      let isEqual = Object.entries(oldState).every(([key, val]) => (
+        val === newState[key]
+      ));
       // check if all props of newState is in oldState
-      isEqual =        isEqual
-        && Object.entries(newState).every(([key, val]) =>
-          twoLevelIsEqual(oldState[key], val, level + 1)
-        );
+      isEqual = isEqual && Object.entries(newState).every(([key, val]) => (
+        oldState[key] === val
+      ));
       // if so, they are equal (upto two levels).
       return isEqual;
     }
@@ -164,40 +166,31 @@ export function createContextAndHooks<Store>(_ignore?: Store): ContextAndDepende
     return oldState === newState;
   }
 
-  function useGlobalStates(
-    propsToSelect: StoreKey[]
-  ): Partial<Store> {
-    const storeMethods = useContext(Context);
-    if (!storeMethods) {
-      throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
+  function useGlobalState<Prop extends StoreKey>(
+    propToSelect: Prop
+  ): Store[Prop] {
+    let storeMethods;
+    if (context) {
+      storeMethods = useContext(context) || undefined;
+      if (!storeMethods) {
+        throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
+      }
+    } else {
+      storeMethods = fixedStore;
+      if (!storeMethods) {
+        throw new Error('Cannot use hook. Please pass valid store.');
+      }
     }
     const { getStates, pubsub } = storeMethods;
     const store = getStates();
-    const [state, setState] = useState(
-      propsToSelect.reduce((acc, propName) => {
-        if (propName in store) {
-          acc[propName] = store[propName];
-        }
-        return acc;
-      }, {} as Store)
-    );
-
-    const propNameHash = propsToSelect
-      .slice()
-      .sort()
-      .join('|');
+    const [state, setState] = useState(store[propToSelect]);
     useEffect(() => {
       const newStateHandler = (newStore: Store): void => {
-        const newState = propsToSelect.reduce((acc, propName) => {
-          if (propName in newStore) {
-            acc[propName] = newStore[propName];
-          }
-          return acc;
-        }, {} as Store);
+        const newState = newStore[propToSelect];
         // console.log('current state', state);
         // console.log('new state', newState);
-        // console.log('twoLevelIsEqual', twoLevelIsEqual(state, newState));
-        if (!twoLevelIsEqual(state, newState)) {
+        // console.log('isShallowEqual', isShallowEqual(state, newState));
+        if (!isShallowEqual(state, newState)) {
           setState(newState);
         }
       };
@@ -205,28 +198,35 @@ export function createContextAndHooks<Store>(_ignore?: Store): ContextAndDepende
       // on component unmount, unsubscribe to prevent mem leak
       return (): void => pubsub.unsubscribe(newStateHandler);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state, propNameHash]);
+    }, [state, propToSelect]);
 
     return state;
   }
 
-  function useGlobalState<Prop extends keyof Store>(
-    propToSelect: Prop
-  ): Store[Prop] {
-    const props = useGlobalStates([propToSelect]);
-    return props[propToSelect] as Store[Prop];
-  }
-
   function useStore() {
-    return useContext(Context) as unknown as StoreMethods<Store>;
+    let storeMethods = fixedStore;
+    if (context) {
+      storeMethods = useContext(context) || undefined;
+    }
+    return storeMethods as unknown as StoreMethods<Store>;
   }
 
   function useUnwrappedAction<Action extends Function>(
     wrappedAction: (storeMethods: StoreMethods<Store>) => Action
   ) {
-    const storeMethods = useContext(Context) as unknown as StoreMethods<Store>;
-    const action = wrappedAction(storeMethods);
-    return action;
+    let storeMethods;
+    if (context) {
+      storeMethods = useContext(context) || undefined;
+      if (!storeMethods) {
+        throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
+      }
+    } else {
+      storeMethods = fixedStore;
+      if (!storeMethods) {
+        throw new Error('Cannot use hook. Please pass valid store.');
+      }
+    }
+    return wrappedAction(storeMethods);
   }
 
   // function useUnwrappedActions<
@@ -249,27 +249,38 @@ export function createContextAndHooks<Store>(_ignore?: Store): ContextAndDepende
   //   return actions as never;
   // }
 
-  // were are making return value non-nullable, because null would throw error
-  // with the hook. So once provider is properly initialized, it would contain Store.
-  const ReturnContext = Context as React.Context<StoreMethods<Store>>;
   return {
-    Context: ReturnContext,
-    useGlobalStates,
     useGlobalState,
     useStore,
     useUnwrappedAction,
   };
 }
 
-// default store
-export const {
-  Context,
-  useGlobalStates,
-  useGlobalState,
-  useStore,
-  useUnwrappedAction,
-} = createContextAndHooks<{}>();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function createContextAndHooks<Store>(_ignore?: Store): ContextAndHooks<Store> {
+  const Context = createContext<StoreMethods<Store>|null>(null);
+
+  const {
+    useGlobalState,
+    useStore,
+    useUnwrappedAction,
+  } = createHooks<Store>(undefined, Context);
+
+  // were are making return value non-nullable, because null would throw error
+  // with the hook. So once provider is properly initialized, it would contain Store.
+  const ReturnContext = Context as React.Context<StoreMethods<Store>>;
+  return {
+    Context: ReturnContext,
+    useGlobalState,
+    useStore,
+    useUnwrappedAction,
+  };
+}
+
+// default store for client-side rendered applications
+// these are easier to use than SSR compatible ones
 export const store = createStore({});
+export const { useGlobalState } = createHooks(store);
 export const {
   getStates,
   setStates,

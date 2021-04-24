@@ -8,10 +8,72 @@ without the reducer, dispatch, thunk/saga, nested selector etc ceremonies.
 npm install react-global-states
 ```
 
+Before you start you need to decide whether you need SSR (Server-side rendering) support or just CSR (client-side rendering). SSR significantly changes the way you code/use the library.
+
+CSR Example:
+
 JS
 
 ```jsx
-import { useGlobalState, useStore } from 'react-global-states';
+import { useGlobalState, updateStates } from 'react-global-states';
+const Component = () => {
+  // get a specific property from the global store
+  const { name = 'Dan' } = useGlobalState('greeting') || {};
+
+  return (
+    <div>
+      Hi {name}
+      {/* for sake of demo, I am not placing the action logic in an action file */}
+      <button onClick={() => updateStates({ greeting: { name: 'everyone' } })}>Greet everyone</button>
+    </div>
+  );
+}
+export default Component;
+```
+
+TS
+
+```jsx
+import { useGlobalState, updateStates } from './myStore';
+const Component = () => {
+  // get a specific property from the global store
+  const { name } = useGlobalState('greeting');
+
+  return (
+    <div>
+      Hi {name}
+      {/* for sake of demo, I am not placing the action logic in an action file */}
+      <button onClick={() => updateStates({ greeting: { name: 'everyone' } })}>Greet everyone</button>
+    </div>
+  );
+}
+export default Component;
+
+// myStore.ts
+import { createStore, createHooks } from 'react-global-states';
+
+type MyStore = {
+  greeting: {
+    name: string;
+  }
+}
+
+const store = createStore<MyStore>({
+  greeting: {
+    name: 'Dan'
+  }
+});
+
+export const { getStates, updateStates } = store;
+export const { useGlobalState } = createHooks(store);
+```
+
+SSR Example:
+
+JS
+
+```jsx
+import { useGlobalState, useStore } from './storeHelpers';
 const Component = () => {
   // get a specific property from the global store
   const { name = 'Dan' } = useGlobalState('greeting');
@@ -27,14 +89,27 @@ const Component = () => {
 }
 export default Component;
 
-// app.js
-import { Context, createStore } from 'react-global-states';
+// storeHelpers.js
+import { createContextAndHooks } from 'react-global-states';
 
-const getInitialState = () => ({
+export const getInitialState = () => ({
   greeting: {
     name: 'Dan'
   }
 });
+
+export const {
+  Context,
+  useGlobalState,
+  useStore,
+} = createContextAndHooks(
+  // optional to pass initial states.. but you get IDE intellisense if you pass it.
+  getInitialState()
+);
+
+// app.js
+import { createStore } from 'react-global-states';
+import { Context, getInitialState } from './storeHelpers';
 
 const App = () => {
   const store = createStore(getInitialState());
@@ -81,7 +156,11 @@ export const getInitialState = (): MyStore => ({
   }
 });
 
-export const { Context, useGlobalState } = createContextAndHooks<MyStore>();
+export const {
+  Context,
+  useGlobalState,
+  useStore,
+} = createContextAndHooks<MyStore>();
 
 // app.js
 import { createStore } from 'react-global-states';
@@ -97,8 +176,6 @@ const App = () => {
 }
 export default App;
 ```
-
-Not so simple as with pure client-side rendered apps.
 
 # Contents
 
@@ -179,23 +256,25 @@ setStates({
 
 The library only reacts to changes in level 1 and level 2 properties of the store object.
 
-This may seem like an arbitrary decision, but from previous experience with libraries like Redux on large projects, it is mostly not a good idea to have highly nested global store. Mostly because managing a tree is a lot harder. It involves selectors and re-mapping store properties to new names etc to improve performance, all of which adds unnecessary complexities/cognitive load, which could have been avoided if you flatten the global store in the first place. react-global-states takes that as good practice and enforces it here.
+This may seem like an arbitrary decision, but from previous experience with libraries like Redux on large projects, it is mostly not a good idea to have highly nested global store. Mostly because managing a tree is a lot harder. It involves selectors and re-mapping store properties to new names etc to improve performance, all of which adds unnecessary complexities/cognitive load, which could have been avoided if you flatten the global store in the first place. `react-global-states` takes that as good practice and enforces it here.
 
 **So what happens if there is a third level of nesting?**
 Well the library will only do a JS strict equality check (=== operator), unlike the first two levels where individual properties are checked. Render performance could take a hit if you nest the global store beyond 3 and more levels.
 So if you do change 3rd or 4th level (or more) object,  make sure that you create a new 3rd level object everytime (using spread or whatever), so that component re-rendering is triggered.
 
-### Q: "Why is this thing so complex"?
+### Q: "Why is SSR more complex"?
 
-Answer: Server-side rendering (SSR)
+Answer: Each server request for a page needs it's own states. Sharing states across requests does not work well in async rendering libraries like `next.js`. Which means each request needs a new store, passed to components via a Context. But that makes libraries more complex to use.
 
-#### Background
-State managers like zustand creates a singleton store that gives a nicer API for purely client-side rendered app as compared to react-global-state. However if server-side rendering is a requirement, a singleton store becomes problematic. How? Two concurrent page render requests would overwrite the same shared store, leading your rendered markup to be wrong as it is based on mixed/inconsistent states.
+### Zombie child & stale props problem
 
-#### Can singleton store have a workaround for SSR?
-You are probably thinking "Can concurrency for the render path of the code be avoided?". Yes, if you write your own server-render function that does not do anything async between state initialization and renderToString().. but most likely you are using `next.js`, whose render code is async, so this is not an option.
+Redux documents [two issues](https://react-redux.js.org/api/hooks#stale-props-and-zombie-children) they had to tackle named "zombie child" and "state props" problems.
 
-This is why it is necessary to create a new store on app launch (inside App component) and dependency inject the store to components via react context.
+The common pattern between the two issues is the use of component props to select a global state. `react-global-states` does not support dynamic selectors, rather get all the data you need and make the conditional decision in render code. This happens to be a good thing here, as both classes of issues are not possible with static selectors.
+
+### Usage with Multiple renderers
+
+When using `react-global-states` with multiple renderers (e.g. react-three-fiber inside react), you will have to implement a [solution mentioned in this thread by franciscop-sc](https://github.com/facebook/react/issues/13332#issuecomment-684144825).
 
 ## Play with it
 
@@ -332,9 +411,7 @@ Returns: An object with functions to use the new store.
 
 ## Breaking changes v4
 
-We have added SSR support. You have to wrap your App with Context.Provider now for things to work.
-
-useGlobalStates() is deprecated. Instead use useGlobalState() (singular).
+useGlobalStates() is removed, instead use useGlobalState() (singular).
 
 ```js
 // old api
@@ -359,3 +436,7 @@ const createSubPropUpdater = (propName) => (partial) => updateStates({ [propName
 ```
 
 * no more ES5 support. distributions are in ES6
+
+## Future work
+
+Support for react concurrent mode. From the current [useMutableSource` RFC](https://github.com/bvaughn/rfcs/blob/useMutableSource/text/0000-use-mutable-source.md#redux-stores) it seems like we can support concurrent mode without public API change. This is just theoretical at the moment.. things could change.
