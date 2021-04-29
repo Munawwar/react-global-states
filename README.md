@@ -270,7 +270,7 @@ Answer: Each server request for a page needs it's own states. Sharing states acr
 
 Redux documents [two issues](https://react-redux.js.org/api/hooks#stale-props-and-zombie-children) they had to tackle named "zombie child" and "state props" problems.
 
-The common pattern between the two issues is the use of component props to select a global state. `react-global-states` does not support dynamic selectors, rather get all the data you need and make the conditional decision in render code. This happens to be a good thing here, as both classes of issues are not possible with static selectors.
+The common pattern between the two issues is the use of component props to select a global state. `react-global-states` does not support dynamic selectors, rather we suggest getting all the states needed and making the conditional decisions afterwards in render function. This happens to be a good thing here, as both classes of issues are not possible with static selectors.
 
 ### Usage with Multiple renderers
 
