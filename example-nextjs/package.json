@@ -1,0 +1,19 @@
+{
+  "name": "nextjs-with-react-global-states-beta",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next -p 3050",
+    "build": "next build",
+    "start": "next start -p 3050",
+    "post-update": "yarn upgrade --latest"
+  },
+  "dependencies": {
+    "next": "10.1.4-canary.16",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-global-states": "3.1.0-beta.3"
+  },
+  "license": "MIT",
+  "keywords": [],
+  "description": ""
+}

@@ -48,7 +48,8 @@ const Component = () => {
   );
 }
 export default Component;
-
+```
+```jsx
 // myStore.ts
 import { createStore, createHooks } from 'react-global-states';
 
@@ -88,7 +89,8 @@ const Component = () => {
   );
 }
 export default Component;
-
+```
+```jsx
 // storeHelpers.js
 import { createContextAndHooks } from 'react-global-states';
 
@@ -106,7 +108,8 @@ export const {
   // optional to pass initial states.. but you get IDE intellisense if you pass it.
   getInitialState()
 );
-
+```
+```jsx
 // app.js
 import { createStore } from 'react-global-states';
 import { Context, getInitialState } from './storeHelpers';
@@ -140,7 +143,8 @@ const Component = () => {
   );
 }
 export default Component;
-
+```
+```jsx
 // storeHelpers.ts
 import { createContextAndHooks } from 'react-global-states';
 
@@ -161,7 +165,8 @@ export const {
   useGlobalState,
   useStore,
 } = createContextAndHooks<MyStore>();
-
+```
+```jsx
 // app.js
 import { createStore } from 'react-global-states';
 import { Context, getInitialState } from './storeHelpers';
@@ -274,7 +279,7 @@ The common pattern between the two issues is the use of component props to selec
 
 ### Usage with Multiple renderers
 
-When using `react-global-states` with multiple renderers (e.g. react-three-fiber inside react), you will have to implement a [solution mentioned in this thread by franciscop-sc](https://github.com/facebook/react/issues/13332#issuecomment-684144825).
+When using `react-global-states` with multiple renderers (e.g. react-three-fiber inside react), you will have to implement a [solution mentioned in this thread by franciscop-sc](https://github.com/facebook/react/issues/13332#issuecomment-513088081).
 
 ## Play with it
 
