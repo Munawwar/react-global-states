@@ -1,55 +1,33 @@
 {
   "name": "react-global-states",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Simple global state store",
   "author": "Munawwar",
   "license": "MIT",
   "repository": "https://github.com/Munawwar/react-global-states",
-  "main": "dist/index.js",
-  "module": "dist/index.es.js",
-  "jsnext:main": "dist/index.es.js",
-  "engines": {
-    "node": ">=8",
-    "npm": ">=5"
+  "module": "dist/index.js",
+  "main": "dist/cjs/index.js",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/index.js",
+    "default": "./dist/index.js"
   },
   "scripts": {
-    "test": "cross-env CI=1 react-scripts test --env=jsdom",
-    "test:watch": "react-scripts test --env=jsdom",
-    "build": "rollup -c",
-    "start": "rollup -c -w",
-    "predeploy": "cd example && yarn install && yarn run build",
-    "deploy": "gh-pages -d example/build"
-  },
-  "dependencies": {
-    "es7-object-polyfill": "^1.0.1"
+    "build": "rm -fr dist/ && rm -fr dist-test/ && tsc && tsc -p tsconfig.cjs.json && tsc -p tsconfig.test.json",
+    "test": "ava dist-test/*.test.js",
+    "test:watch": "concurrently \"tsc -p tsconfig.test.json --watch\" \"ava --watch dist-test/*.test.js\""
   },
   "peerDependencies": {
-    "react": "^16.9.0"
+    "react": ">=16"
   },
   "devDependencies": {
     "@testing-library/react-hooks": "^3.2.1",
-    "@types/jest": "^23.3.13",
-    "@types/react": "^16.7.22",
-    "@typescript-eslint/eslint-plugin": "^3.9.0",
-    "@typescript-eslint/parser": "^3.9.0",
-    "cross-env": "^5.2.0",
-    "eslint": "7.2.0",
-    "eslint-config-airbnb": "18.2.0",
-    "eslint-plugin-import": "^2.21.2",
-    "eslint-plugin-jsx-a11y": "^6.3.0",
-    "eslint-plugin-react": "^7.20.0",
-    "eslint-plugin-react-hooks": "4.0.0",
-    "gh-pages": "^2.0.1",
+    "@types/react": "^16.9.0",
+    "ava": "^6.1.3",
+    "concurrently": "^8.2.2",
     "react": "^16.9.0",
-    "react-scripts": "^3.4.0",
     "react-test-renderer": "^16.9.0",
-    "rollup": "^1.1.2",
-    "rollup-plugin-commonjs": "^9.2.0",
-    "rollup-plugin-node-resolve": "^4.0.0",
-    "rollup-plugin-peer-deps-external": "^2.2.0",
-    "rollup-plugin-terser": "^7.0.0",
-    "rollup-plugin-typescript2": "^0.19.2",
-    "rollup-plugin-url": "^2.1.0",
-    "typescript": "^3.2.4"
+    "sinon": "^18.0.0",
+    "typescript": "^5.5.4"
   }
 }

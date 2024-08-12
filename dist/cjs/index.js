@@ -1,6 +1,11 @@
-import { createContext, useContext, useEffect, useState, } from 'react';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createPropUpdater = exports.updateStates = exports.setStates = exports.getStates = exports.useGlobalState = exports.store = exports.createStore = void 0;
+exports.createHooks = createHooks;
+exports.createContextAndHooks = createContextAndHooks;
+const react_1 = require("react");
 const plainObjectPrototype = Object.getPrototypeOf({});
-export const createStore = function createStore(initStore) {
+const createStore = function createStore(initStore) {
     // "The" global store
     let store = initStore;
     // internal publisher-subscriber system to
@@ -66,6 +71,7 @@ export const createStore = function createStore(initStore) {
         pubsub,
     };
 };
+exports.createStore = createStore;
 /**
  * Hooks can be created either for a client side only rendered app or server side rendered app
  * SSR apps includes CSR requirements (it's like a superset). CSR gives simpler APIs.
@@ -73,7 +79,7 @@ export const createStore = function createStore(initStore) {
  * So for SRR, context is mandatory (and don't pass fixedStore)
  * For CSR, fixedStore is mandatory (and don't pass context)
  */
-export function createHooks(fixedStore, context) {
+function createHooks(fixedStore, context) {
     if (!context && !fixedStore) {
         throw new Error('Cannot use createHooks(). Please pass store or context.');
     }
@@ -104,7 +110,7 @@ export function createHooks(fixedStore, context) {
     function useGlobalState(propToSelect) {
         let storeMethods;
         if (context) {
-            storeMethods = useContext(context) || undefined;
+            storeMethods = (0, react_1.useContext)(context) || undefined;
             if (!storeMethods) {
                 throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
             }
@@ -117,10 +123,10 @@ export function createHooks(fixedStore, context) {
         }
         const { getStates, pubsub } = storeMethods;
         const allStates = getStates();
-        let [state, setState] = useState(allStates[propToSelect]);
-        const [previousStore, setPreviousStore] = useState(storeMethods);
+        let [state, setState] = (0, react_1.useState)(allStates[propToSelect]);
+        const [previousStore, setPreviousStore] = (0, react_1.useState)(storeMethods);
         // manage subscription
-        useEffect(() => {
+        (0, react_1.useEffect)(() => {
             // if store has changed then reset state from new store.
             if (storeMethods !== previousStore) {
                 state = allStates[propToSelect];
@@ -146,14 +152,14 @@ export function createHooks(fixedStore, context) {
     function useStore() {
         let storeMethods = fixedStore;
         if (context) {
-            storeMethods = useContext(context) || undefined;
+            storeMethods = (0, react_1.useContext)(context) || undefined;
         }
         return storeMethods;
     }
     function useUnwrappedAction(wrappedAction) {
         let storeMethods;
         if (context) {
-            storeMethods = useContext(context) || undefined;
+            storeMethods = (0, react_1.useContext)(context) || undefined;
             if (!storeMethods) {
                 throw new Error('Cannot use hook. Please check if Provider has been added and that it has been initialized properly.');
             }
@@ -192,8 +198,8 @@ export function createHooks(fixedStore, context) {
     };
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function createContextAndHooks(_ignore) {
-    const Context = createContext(null);
+function createContextAndHooks(_ignore) {
+    const Context = (0, react_1.createContext)(null);
     const { useGlobalState, useStore, useUnwrappedAction, } = createHooks(undefined, Context);
     // were are making return value non-nullable, because null would throw error
     // with the hook. So once provider is properly initialized, it would contain Store.
@@ -207,9 +213,9 @@ export function createContextAndHooks(_ignore) {
 }
 // default store for client-side rendered applications
 // these are easier to use than SSR compatible ones
-export const store = createStore({});
-export const { useGlobalState } = createHooks(store);
-export const { getStates, setStates, updateStates, createPropUpdater, } = store;
+exports.store = (0, exports.createStore)({});
+exports.useGlobalState = createHooks(exports.store).useGlobalState;
+exports.getStates = exports.store.getStates, exports.setStates = exports.store.setStates, exports.updateStates = exports.store.updateStates, exports.createPropUpdater = exports.store.createPropUpdater;
 // -------------- app code testing ------------------
 /*
 interface MyStoreType {

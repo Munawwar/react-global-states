@@ -10,31 +10,10 @@ npm install react-global-states
 
 Before you start you need to decide whether you need SSR (Server-side rendering) support or just CSR (client-side rendering). SSR significantly changes the way you code/use the library.
 
-CSR Example:
-
-JS
+### CSR Example
 
 ```jsx
-import { useGlobalState, updateStates } from 'react-global-states';
-const Component = () => {
-  // get a specific property from the global store
-  const { name = 'Dan' } = useGlobalState('greeting') || {};
-
-  return (
-    <div>
-      Hi {name}
-      {/* for sake of demo, I am not placing the action logic in an action file */}
-      <button onClick={() => updateStates({ greeting: { name: 'everyone' } })}>Greet everyone</button>
-    </div>
-  );
-}
-export default Component;
-```
-
-TS
-
-```jsx
-import { useGlobalState, updateStates } from './myStore';
+import { useGlobalState, updateStates } from './store';
 const Component = () => {
   // get a specific property from the global store
   const { name } = useGlobalState('greeting');
@@ -49,17 +28,17 @@ const Component = () => {
 }
 export default Component;
 ```
-```jsx
-// myStore.ts
+```tsx
+// store.ts
 import { createStore, createHooks } from 'react-global-states';
 
-type MyStore = {
+type StoreType = {
   greeting: {
     name: string;
   }
 }
 
-const store = createStore<MyStore>({
+const store = createStore<StoreType>({
   greeting: {
     name: 'Dan'
   }
@@ -69,66 +48,10 @@ export const { getStates, updateStates } = store;
 export const { useGlobalState } = createHooks(store);
 ```
 
-SSR Example:
-
-JS
-
-```jsx
-import { useGlobalState, useStore } from './storeHelpers';
-const Component = () => {
-  // get a specific property from the global store
-  const { name = 'Dan' } = useGlobalState('greeting');
-  const { updateStates } = useStore();
-
-  return (
-    <div>
-      Hi {name}
-      {/* for sake of demo, I am not placing the action logic in an action file */}
-      <button onClick={() => updateStates({ greeting: { name: 'everyone' }})}>Greet everyone</button>
-    </div>
-  );
-}
-export default Component;
-```
-```jsx
-// storeHelpers.js
-import { createContextAndHooks } from 'react-global-states';
-
-export const getInitialState = () => ({
-  greeting: {
-    name: 'Dan'
-  }
-});
-
-export const {
-  Context,
-  useGlobalState,
-  useStore,
-} = createContextAndHooks(
-  // optional to pass initial states.. but you get IDE intellisense if you pass it.
-  getInitialState()
-);
-```
-```jsx
-// app.js
-import { createStore } from 'react-global-states';
-import { Context, getInitialState } from './storeHelpers';
-
-const App = () => {
-  const store = createStore(getInitialState());
-  return (
-    <Context.Provider value={store}>
-      <Component />
-    </Context.Provider>
-  );
-}
-export default App;
-```
-
-TypeScript
+### SSR Example
 
 ```tsx
-import { useGlobalState, useStore } from './storeHelpers';
+import { useGlobalState, useStore } from './store-context';
 
 const Component = () => {
   // get a specific property from the global store
@@ -144,17 +67,17 @@ const Component = () => {
 }
 export default Component;
 ```
-```jsx
-// storeHelpers.ts
+```tsx
+// store-context.ts
 import { createContextAndHooks } from 'react-global-states';
 
-type MyStore = {
+type StoreType = {
   greeting: {
     name: string;
   }
 }
 
-export const getInitialState = (): MyStore => ({
+export const getInitialState = (): StoreType => ({
   greeting: {
     name: 'Dan'
   }
@@ -164,15 +87,18 @@ export const {
   Context,
   useGlobalState,
   useStore,
-} = createContextAndHooks<MyStore>();
+} = createContextAndHooks<StoreType>();
 ```
-```jsx
+```tsx
 // app.js
 import { createStore } from 'react-global-states';
-import { Context, getInitialState } from './storeHelpers';
+import { Context, getInitialState, StoreType } from './store-context';
 
-const App = () => {
-  const store = createStore(getInitialState());
+const App = (storeProps: Partial<StoreType>) => {
+  const store = createStore({
+    ...getInitialState(),
+    ...storeProps,
+  });
   return (
     <Context.Provider value={store}>
       <Component />
@@ -425,6 +351,12 @@ const { cart: { quantity } } = useGlobalStates(['cart']);
 const { quantity } = useGlobalState('cart');
 ```
 
+There is codemod/migrate-from-3-to-4.js file to help migrate from v3 to v4. First make change in the codemod file to detect your import files (find comments with "NOTE" prefix in the file)
+```
+npm i -g jscodeshift
+jscodeshift -t codemod/migrate-from-3-to-4.js <file>
+```
+
 ## Changes v3.1
 
 * Bring back createSubPropUpdater(). But it's named createPropUpdater() instead.
@@ -442,6 +374,13 @@ const createSubPropUpdater = (propName) => (partial) => updateStates({ [propName
 
 * no more ES5 support. distributions are in ES6
 
-## Future work
+### Dev Setup notes
 
-Support for react concurrent mode. From the current [useMutableSource` RFC](https://github.com/bvaughn/rfcs/blob/useMutableSource/text/0000-use-mutable-source.md#redux-stores) it seems like we can support concurrent mode without public API change. This is just theoretical at the moment.. things could change.
+```
+npm ci
+npm run build
+# Test watcher
+npm run watch
+```
+
+You need node.js 20+ to run test watcher on linux.

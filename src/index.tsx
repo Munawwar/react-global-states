@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import 'es7-object-polyfill';
 
 const plainObjectPrototype = Object.getPrototypeOf({});
 

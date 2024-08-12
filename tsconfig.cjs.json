@@ -1,12 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist-test/",
+    "outDir": "dist/cjs",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ESNext",
   },
   "include": [
-    "src/index.test.tsx"
+    "src/index.tsx"
   ]
 }

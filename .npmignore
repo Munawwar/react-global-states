@@ -1,6 +1,9 @@
-example
-example-nextjs
+src/
+example/
+example-nextjs/
+dist-test/
+codemod/
 .env
-.travis.yml
-rollup.config.js
+tsconfig.json
 tsconfig.test.json
+yarn.lock
