@@ -248,7 +248,7 @@ Returns: No return value
 
 <br><br>
 
-#### updateStates(partial&lt;Object&gt;)
+#### updateStates(partial&lt;Object&gt;, isEqual?&lt;Function&gt;)
 
 Function to update multiple states on the global store. updateStates will merge new states upto two levels of the store.
 
@@ -283,6 +283,8 @@ Parameters:
 
 partial: An partial store object that would be used to update the store.
 
+isEqual (optional): Custom equality function `(a, b) => boolean` to compare old and new values. Defaults to shallow equality. Use this for deep equality or custom comparison logic.
+
 Returns: No return value
 
 <br><br>
@@ -293,7 +295,7 @@ Returns: Store methods for the store that was connected via context provider.
 
 <br><br>
 
-#### createPropUpdater(propName&lt;String&gt;)
+#### createPropUpdater(propName&lt;String&gt;, isEqual?&lt;Function&gt;)
 
 Returns a function that can be used to update a specific prop from the store. This is only needed if prop value is an object which you want to incrementally update.
 
@@ -302,6 +304,8 @@ This is a convenience function. You can achieve what you want with updateStates(
 Arguments:
 
 propName: The prop name whose sub/inner properties that you want to ultimately update.
+
+isEqual (optional): Custom equality function `(a, b) => boolean` to compare old and new values. Defaults to shallow equality.
 
 Returns: A function that you can call (any number of times) to incrementally update the prop's sub/inner properties.
 
@@ -318,6 +322,10 @@ const updateCart = createPropUpdater('cart');
 const resetCart = () => updateCart({ items: [] });
 const setCartItems = (items) => updateCart({ items });
 // .. the more actions you have that is updating cart, the more useful createPropUpdater() becomes.
+
+// with custom equality function
+import { isEqual as deepEqual } from 'es-toolkit/predicate';
+const updateCart = createPropUpdater('cart', deepEqual);
 ```
 
 <br><br>
@@ -339,6 +347,12 @@ initialStoreProps (optional): An object with properties to initialize your store
 Returns: An object with functions to use the new store.
 
 <br><br>
+
+## Breaking changes v5
+
+**React 18+ is now required.** The library now uses React's `useSyncExternalStore` hook for concurrent rendering safety.
+
+If you need React 16 or 17 support, use v4.x.
 
 ## Breaking changes v4
 

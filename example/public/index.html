@@ -3,11 +3,18 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-
-    <title>react-global-states</title>
+    <title>react-global-states example</title>
+    
+    <!-- Import maps for React and ReactDOM -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.2.0?dev",
+          "react-dom": "https://esm.sh/react-dom@18.2.0?dev",
+          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev"
+        }
+      }
+    </script>
   </head>
 
   <body>
@@ -16,5 +23,6 @@
     </noscript>
 
     <div id="root"></div>
+    <script type="module" src="/bundle.js"></script>
   </body>
 </html>

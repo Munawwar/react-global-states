@@ -1,11 +1,13 @@
-This project a proof-of-concept on using react-global-states - a shared/global state store, connecting multiple React components to the store and testing if
-components react to the changes in the store.
+This project demonstrates using react-global-states - a shared/global state store, connecting multiple React components to the store.
 
-### Start
+### Run demo
+
+```bash
+npm install
+npm run dev
 ```
-yarn install
-yarn start
-```
+
+This will start a dev server at http://localhost:8000
 
 Type `showStates()` on browser console to see states any time.
 

@@ -21,7 +21,7 @@ function App() {
 
 	return (
 		<Context.Provider value={store}>
-			<StateTest parentProp='My name is react-global-states' />
+			<StateTest parentProp='My name is react-global-states' store={store} />
 		</Context.Provider>
 	);
 }

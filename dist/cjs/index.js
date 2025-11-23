@@ -8,67 +8,102 @@ const plainObjectPrototype = Object.getPrototypeOf({});
 const createStore = function createStore(initStore) {
     // "The" global store
     let store = initStore;
-    // internal publisher-subscriber system to
-    // notify containers of store changes.
-    const pubsub = {
-        handlers: [],
-        subscribe(handler) {
-            // console.log('subscribed');
-            if (!this.handlers.includes(handler)) {
-                this.handlers.push(handler);
-            }
-        },
-        unsubscribe(handler) {
-            // console.log('unsubscribed');
-            const index = this.handlers.indexOf(handler);
-            if (index > -1) {
-                this.handlers.splice(index, 1);
-            }
-        },
-        notify(newStore) {
-            this.handlers.forEach((handler) => handler(newStore));
-        },
-    };
+    // Listeners for useSyncExternalStore
+    const listeners = new Set();
     const getStates = () => ({ ...store });
     // global state merger. unlike redux, I am not enforcing reducer layer
     const isPlainObject = (obj) => Boolean(obj
         && typeof obj === 'object'
         && Object.getPrototypeOf(obj) === plainObjectPrototype);
+    // Shallow equality check for plain objects and arrays
+    const isShallowEqual = (a, b) => {
+        if (Object.is(a, b)) {
+            return true;
+        }
+        if (typeof a !== 'object' ||
+            typeof b !== 'object' ||
+            a === null ||
+            b === null) {
+            return false;
+        }
+        const aPrototype = Object.getPrototypeOf(a);
+        const bPrototype = Object.getPrototypeOf(b);
+        // Handle plain objects and arrays
+        if ((aPrototype === plainObjectPrototype || Array.isArray(a)) &&
+            aPrototype === bPrototype) {
+            const aKeys = Object.keys(a);
+            const bKeys = Object.keys(b);
+            if (aKeys.length !== bKeys.length) {
+                return false;
+            }
+            return aKeys.every(key => Object.is(a[key], b[key]));
+        }
+        // Handle Date objects
+        if (a instanceof Date && b instanceof Date) {
+            return a.getTime() === b.getTime();
+        }
+        return false;
+    };
+    // Notify all listeners
+    const notifyListeners = () => {
+        listeners.forEach((listener) => listener());
+    };
     // updateStates merges properties upto two levels of the data store
-    const updateStates = (partial) => {
+    const updateStates = (partial, isEqual = isShallowEqual) => {
         const propNames = Object.keys(partial);
+        let hasChanges = false;
         while (propNames.length) {
             const propName = propNames.shift();
             const oldValue = store[propName];
             const newValue = partial[propName];
             if (isPlainObject(oldValue) && isPlainObject(newValue)) {
-                store[propName] = {
+                // Merge the objects
+                const mergedValue = {
                     ...oldValue,
                     ...newValue,
                 };
+                // Only update if the merged result is different from the old value
+                if (!isEqual(oldValue, mergedValue)) {
+                    store[propName] = mergedValue;
+                    hasChanges = true;
+                }
             }
             else {
-                store[propName] = newValue;
+                // For non-plain-objects, check if the value actually changed
+                if (!isEqual(oldValue, newValue)) {
+                    store[propName] = newValue;
+                    hasChanges = true;
+                }
             }
         }
-        pubsub.notify(store);
+        // Only notify listeners if something actually changed
+        if (hasChanges) {
+            notifyListeners();
+        }
     };
     const setStates = (newStore) => {
         store = newStore;
-        pubsub.notify(newStore);
+        notifyListeners();
+    };
+    // Subscribe function compatible with useSyncExternalStore
+    const subscribe = (callback) => {
+        listeners.add(callback);
+        return () => {
+            listeners.delete(callback);
+        };
     };
     // curry function to partially update a sub property of global store.
     // e.g const updateCart = createPropUpdater('cart');
     // updateCart({ items: [], quantity: 0 });
     // this is equivalent to
     // updateStates({ cart: { items: [], quantity: 0 } })
-    const createPropUpdater = (propName) => (partial) => updateStates({ [propName]: partial });
+    const createPropUpdater = (propName, isEqual) => (partial) => updateStates({ [propName]: partial }, isEqual);
     return {
         getStates,
         setStates,
         updateStates,
         createPropUpdater,
-        pubsub,
+        subscribe,
     };
 };
 exports.createStore = createStore;
@@ -82,30 +117,6 @@ exports.createStore = createStore;
 function createHooks(fixedStore, context) {
     if (!context && !fixedStore) {
         throw new Error('Cannot use createHooks(). Please pass store or context.');
-    }
-    // utility
-    const isNullish = (val) => val === null || val === undefined;
-    function isShallowEqual(oldState, newState) {
-        if (isNullish(oldState)
-            || isNullish(newState)
-            || typeof oldState !== 'object'
-            || typeof newState !== 'object') {
-            return oldState === newState;
-        }
-        const oldStatePrototype = Object.getPrototypeOf(oldState);
-        if ((oldStatePrototype === plainObjectPrototype || Array.isArray(oldState))
-            && oldStatePrototype === Object.getPrototypeOf(newState)) {
-            // check if all props of oldState is in newState
-            let isEqual = Object.entries(oldState).every(([key, val]) => (val === newState[key]));
-            // check if all props of newState is in oldState
-            isEqual = isEqual && Object.entries(newState).every(([key, val]) => (oldState[key] === val));
-            // if so, they are equal (upto two levels).
-            return isEqual;
-        }
-        if (oldState instanceof Date && newState instanceof Date) {
-            return oldState.getTime() === newState.getTime();
-        }
-        return oldState === newState;
     }
     function useGlobalState(propToSelect) {
         let storeMethods;
@@ -121,32 +132,17 @@ function createHooks(fixedStore, context) {
                 throw new Error('Cannot use hook. Please pass valid store.');
             }
         }
-        const { getStates, pubsub } = storeMethods;
-        const allStates = getStates();
-        let [state, setState] = (0, react_1.useState)(allStates[propToSelect]);
-        const [previousStore, setPreviousStore] = (0, react_1.useState)(storeMethods);
-        // manage subscription
-        (0, react_1.useEffect)(() => {
-            // if store has changed then reset state from new store.
-            if (storeMethods !== previousStore) {
-                state = allStates[propToSelect];
-                setState(state);
-                setPreviousStore(storeMethods);
-            }
-            const newStateHandler = (newStore) => {
-                const newState = newStore[propToSelect];
-                // console.log('current state', state);
-                // console.log('new state', newState);
-                // console.log('isShallowEqual', isShallowEqual(state, newState));
-                if (!isShallowEqual(state, newState)) {
-                    setState(newState);
-                }
-            };
-            pubsub.subscribe(newStateHandler);
-            // unsubscribe on component unmount or store change
-            return () => pubsub.unsubscribe(newStateHandler);
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [state, storeMethods, propToSelect]);
+        const { getStates, subscribe } = storeMethods;
+        // Create a getSnapshot function that returns the selected property
+        const getSnapshot = () => {
+            return getStates()[propToSelect];
+        };
+        // For SSR, provide a getServerSnapshot that returns the initial state
+        const getServerSnapshot = () => {
+            return getStates()[propToSelect];
+        };
+        // Use useSyncExternalStore for concurrent-safe state subscription
+        const state = (0, react_1.useSyncExternalStore)(subscribe, getSnapshot, getServerSnapshot);
         return state;
     }
     function useStore() {
@@ -216,31 +212,4 @@ function createContextAndHooks(_ignore) {
 exports.store = (0, exports.createStore)({});
 exports.useGlobalState = createHooks(exports.store).useGlobalState;
 exports.getStates = exports.store.getStates, exports.setStates = exports.store.setStates, exports.updateStates = exports.store.updateStates, exports.createPropUpdater = exports.store.createPropUpdater;
-// -------------- app code testing ------------------
-/*
-interface MyStoreType {
-  greeting: string;
-  cart: {
-    totalQty: number;
-    items: {
-      qty: number;
-      sku: string;
-    }[];
-  };
-  test: {
-    test2: string;
-  };
-}
-const { updateStates: updater } = createStore<MyStoreType>({
-  greeting: 'hi',
-  cart: { totalQty: 0, items: [] },
-  test: { test2: 'hi' },
-});
-updater({ greeting: 'hi' }); // no error
-updater({ cart: { greeting: 'hi' } }); // error
-updater({ cart: { cart: {} } }); // error
-updater({ cart: { test: {} } }); // error
-updater({ cart: { test2: 'h1' } }); // error
-updater({ cart: { totalQty: 0, items: [] } }); // no error
-*/
 //# sourceMappingURL=index.js.map

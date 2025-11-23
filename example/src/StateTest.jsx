@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGlobalState, useStore } from './storeHelpers';
+import { useGlobalState } from './storeHelpers';
 import * as cartActionCreators from './cart-actions';
 
 const Component = ({
@@ -9,7 +9,6 @@ const Component = ({
 }) => {
 	console.log('StateTest render...');
 	const { name } = useGlobalState('user');
-	const store = useStore();
 	return (
 		<div>
 			Hi {name}

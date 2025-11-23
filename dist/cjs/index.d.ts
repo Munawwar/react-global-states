@@ -1,13 +1,11 @@
 import React from 'react';
+export type EqualityFn = (a: unknown, b: unknown) => boolean;
 export interface StoreMethods<Store> {
     getStates(): Store;
     setStates(newStore: Store): void;
-    updateStates(partial: Partial<Store>): void;
-    createPropUpdater<Prop extends keyof Store>(propName: Prop): (partial: Partial<Store[Prop]>) => void;
-    pubsub: {
-        subscribe: (handler: (store: Store) => void) => void;
-        unsubscribe: (handler: (store: Store) => void) => void;
-    };
+    updateStates(partial: Partial<Store>, isEqual?: EqualityFn): void;
+    createPropUpdater<Prop extends keyof Store>(propName: Prop, isEqual?: EqualityFn): (partial: Partial<Store[Prop]>) => void;
+    subscribe(callback: () => void): () => void;
 }
 export declare const createStore: <Store>(initStore: Store) => StoreMethods<Store>;
 export interface Hooks<Store> {
@@ -29,4 +27,4 @@ export declare function createHooks<Store>(fixedStore?: StoreMethods<Store>, con
 export declare function createContextAndHooks<Store>(_ignore?: Store): ContextAndHooks<Store>;
 export declare const store: StoreMethods<{}>;
 export declare const useGlobalState: <Prop extends never>(propToSelect: Prop) => {}[Prop];
-export declare const getStates: () => {}, setStates: (newStore: {}) => void, updateStates: (partial: Partial<{}>) => void, createPropUpdater: <Prop extends never>(propName: Prop) => (partial: Partial<{}[Prop]>) => void;
+export declare const getStates: () => {}, setStates: (newStore: {}) => void, updateStates: (partial: Partial<{}>, isEqual?: EqualityFn) => void, createPropUpdater: <Prop extends never>(propName: Prop, isEqual?: EqualityFn) => (partial: Partial<{}[Prop]>) => void;

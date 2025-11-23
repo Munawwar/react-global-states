@@ -1,10 +1,11 @@
 {
   "name": "react-global-states",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "Simple global state store",
   "author": "Munawwar",
   "license": "MIT",
   "repository": "https://github.com/Munawwar/react-global-states",
+  "type": "module",
   "module": "dist/index.js",
   "main": "dist/cjs/index.js",
   "exports": {
@@ -12,22 +13,27 @@
     "import": "./dist/index.js",
     "default": "./dist/index.js"
   },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "scripts": {
     "build": "rm -fr dist/ && rm -fr dist-test/ && tsc && tsc -p tsconfig.cjs.json && tsc -p tsconfig.test.json",
     "test": "ava dist-test/*.test.js",
     "test:watch": "concurrently \"tsc -p tsconfig.test.json --watch\" \"ava --watch dist-test/*.test.js\""
   },
   "peerDependencies": {
-    "react": ">=16"
+    "react": ">=18"
   },
   "devDependencies": {
-    "@testing-library/react-hooks": "^3.2.1",
-    "@types/react": "^16.9.0",
-    "ava": "^6.1.3",
+    "@testing-library/react": "^14.0.0",
+    "@types/react": "^18.2.0",
+    "ava": "^6.4.1",
     "concurrently": "^8.2.2",
-    "react": "^16.9.0",
-    "react-test-renderer": "^16.9.0",
-    "sinon": "^18.0.0",
-    "typescript": "^5.5.4"
+    "happy-dom": "^20.0.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sinon": "^21.0.0",
+    "typescript": "^5.9.3"
   }
 }
